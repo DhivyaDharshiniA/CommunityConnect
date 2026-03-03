@@ -81,6 +81,7 @@ public class SecurityConfig {
                         .requestMatchers("/**/*.png", "/**/*.jpg", "/**/*.jpeg", "/**/*.gif").permitAll()
                         .requestMatchers("/**/*.css", "/**/*.js").permitAll()
                         .requestMatchers("/fill-form", "/fill-form/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
