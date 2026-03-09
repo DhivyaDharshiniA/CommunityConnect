@@ -25,6 +25,7 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
       </div>
 
       <nav className="flex flex-col gap-2 flex-1">
+
         <NavItem
           icon="dashboard"
           label="Overview"
@@ -48,11 +49,26 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
         />
 
         <NavItem
+          icon="request"
+          label="Request Help"
+          active={activeTab === "helpRequest"}
+          onClick={() => setActiveTab("helpRequest")}
+        />
+
+        <NavItem
+          icon="donate"
+          label="Donate"
+          active={activeTab === "helpFeed"}
+          onClick={() => setActiveTab("helpFeed")}
+        />
+
+        <NavItem
           icon="sos"
           label="SOS"
           active={activeTab === "sos"}
           onClick={() => setActiveTab("sos")}
         />
+
       </nav>
 
       <button
@@ -61,6 +77,7 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
       >
         Logout
       </button>
+
     </aside>
   );
 }
@@ -97,6 +114,7 @@ function Icon({ type }) {
   const base = "w-4 h-4";
 
   switch (type) {
+
     case "dashboard":
       return (
         <svg className={base} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -115,6 +133,20 @@ function Icon({ type }) {
       return (
         <svg className={base} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path d="M5 13l4 4L19 7" />
+        </svg>
+      );
+
+    case "request":
+      return (
+        <svg className={base} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      );
+
+    case "donate":
+      return (
+        <svg className={base} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M12 21C12 21 4 13 4 8a4 4 0 018-1 4 4 0 018 1c0 5-8 13-8 13z"/>
         </svg>
       );
 

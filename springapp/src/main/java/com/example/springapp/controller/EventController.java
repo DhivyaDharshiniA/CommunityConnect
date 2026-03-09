@@ -170,4 +170,44 @@ public class EventController {
             return ResponseEntity.status(404).body("Event not found");
         }
     }
+
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteEvent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            User user = userRepo.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Event event = eventRepo.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Event not found"));
+
+            // Only the creator can delete their own event
+            if (!event.getCreatedBy().getId().equals(user.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("You are not authorized to delete this event");
+            }
+
+            // Optionally delete the banner image file from disk
+            if (event.getBannerImage() != null) {
+                try {
+                    String fileName = event.getBannerImage()
+                            .replace("http://localhost:8080/uploads/", "");
+                    Path filePath = Paths.get("uploads/" + fileName);
+                    Files.deleteIfExists(filePath);
+                } catch (Exception ignored) {
+                    // Non-critical — proceed even if file deletion fails
+                }
+            }
+
+            eventRepo.deleteById(id);
+            return ResponseEntity.ok("Event deleted successfully");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error deleting event");
+        }
+    }
 }

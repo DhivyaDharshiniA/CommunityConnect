@@ -64,15 +64,6 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/api/auth/**").permitAll()       // login, register
-//                        .requestMatchers("/api/events/all", "/qrcodes/**").permitAll()
-//                        .requestMatchers("/images/**").permitAll() // <-- add this// public events & QR codes
-//                        .requestMatchers("/**/*.png", "/**/*.jpg", "/**/*.jpeg", "/**/*.gif").permitAll() // allow all images
-//                        .requestMatchers("/**/*.css", "/**/*.js").permitAll()
-//                        .requestMatchers("/fill-form", "/fill-form/**").permitAll()
-//                        .anyRequest().authenticated()
-//                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/events/all", "/qrcodes/**").permitAll()
@@ -82,6 +73,8 @@ public class SecurityConfig {
                         .requestMatchers("/**/*.css", "/**/*.js").permitAll()
                         .requestMatchers("/fill-form", "/fill-form/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/help/**").permitAll()
+                        .requestMatchers("/api/donations/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
