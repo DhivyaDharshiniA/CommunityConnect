@@ -11,5 +11,6 @@ import java.util.*;
 public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findByCreatedBy(User user);
-//    List<Event> findByRegisteredUsersContains(User user);
+    List<Event> findByCreatedByIdNot(Long userId);
+
 }

@@ -1,261 +1,3 @@
-// // import React, { useState } from "react";
-// // import API from "../api";
-// // import { useNavigate, Link } from "react-router-dom";
-// //
-// // function Register() {
-// //   const [formData, setFormData] = useState({
-// //     name: "",
-// //     email: "",
-// //     password: "",
-// //     role: "ROLE_USER",
-// //   });
-// //
-// //   const navigate = useNavigate();
-// //
-// //   const handleChange = (e) => {
-// //     setFormData({
-// //       ...formData,
-// //       [e.target.name]: e.target.value,
-// //     });
-// //   };
-// //
-// //   const handleSubmit = async (e) => {
-// //     e.preventDefault();
-// //
-// //     try {
-// //       const response = await API.post("/register", formData);
-// //
-// //       // If backend returns token
-// //       if (response.data.token) {
-// //         localStorage.setItem("token", response.data.token);
-// //         localStorage.setItem("role", response.data.role);
-// //
-// //         if (response.data.role === "ROLE_ADMIN") {
-// //           navigate("/admin-dashboard");
-// //         } else {
-// //           navigate("/dashboard");
-// //         }
-// //       } else {
-// //         navigate("/login");
-// //       }
-// //
-// //       alert("Registration successful!");
-// //
-// //     } catch (error) {
-// //       alert("Registration failed");
-// //     }
-// //   };
-// //
-// //   return (
-// //     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
-// //       <div className="bg-white p-8 rounded-2xl shadow-xl w-96">
-// //         <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
-// //           Create Account
-// //         </h2>
-// //
-// //         <form onSubmit={handleSubmit} className="space-y-4">
-// //
-// //           <input
-// //             type="text"
-// //             name="name"
-// //             placeholder="Full Name"
-// //             onChange={handleChange}
-// //             className="w-full px-4 py-2 border rounded-lg"
-// //             required
-// //           />
-// //
-// //           <input
-// //             type="email"
-// //             name="email"
-// //             placeholder="Email Address"
-// //             onChange={handleChange}
-// //             className="w-full px-4 py-2 border rounded-lg"
-// //             required
-// //           />
-// //
-// //           <input
-// //             type="password"
-// //             name="password"
-// //             placeholder="Password"
-// //             onChange={handleChange}
-// //             className="w-full px-4 py-2 border rounded-lg"
-// //             required
-// //           />
-// //
-// //           {/* Role Selection */}
-// //           <select
-// //             name="role"
-// //             value={formData.role}
-// //             onChange={handleChange}
-// //             className="w-full px-4 py-2 border rounded-lg"
-// //           >
-// //             <option value="ROLE_USER">User</option>
-// //             <option value="ROLE_ADMIN">NGO</option>
-// //           </select>
-// //
-// //           <button
-// //             type="submit"
-// //             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-// //           >
-// //             Register
-// //           </button>
-// //
-// //         </form>
-// //
-// //         <p className="text-center mt-4 text-sm">
-// //           Already have an account?{" "}
-// //           <Link to="/login" className="text-blue-600 font-semibold">
-// //             Login
-// //           </Link>
-// //         </p>
-// //       </div>
-// //     </div>
-// //   );
-// // }
-// //
-// // export default Register;
-//
-//
-// import React, { useState } from "react";
-// import API from "../api";
-// import { useNavigate, Link } from "react-router-dom";
-//
-// function Register() {
-//
-//   const [formData, setFormData] = useState({
-//     name: "",
-//     email: "",
-//     password: "",
-//     role: "ROLE_USER"
-//   });
-//
-//   const [proofFile, setProofFile] = useState(null);
-//
-//   const navigate = useNavigate();
-//
-//   const handleChange = (e) => {
-//     setFormData({
-//       ...formData,
-//       [e.target.name]: e.target.value
-//     });
-//   };
-//
-//   const handleFileChange = (e) => {
-//     setProofFile(e.target.files[0]);
-//   };
-//
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//
-//     const formDataToSend = new FormData();
-//     formDataToSend.append("name", formData.name);
-//     formDataToSend.append("email", formData.email);
-//     formDataToSend.append("password", formData.password);
-//     formDataToSend.append("role", formData.role);
-//
-//     if (formData.role === "ROLE_NGO") {
-//       if (!proofFile) {
-//         alert("Please upload NGO proof document");
-//         return;
-//       }
-//       formDataToSend.append("proof", proofFile);
-//     }
-//
-//     try {
-//       await API.post("/register", formDataToSend);
-//
-//       alert("Registration successful!");
-//       navigate("/login");
-//
-//     } catch (error) {
-//       console.error(error);
-//       alert("Registration failed");
-//     }
-//   };
-//
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
-//       <div className="bg-white p-8 rounded-2xl shadow-xl w-96">
-//
-//         <h2 className="text-2xl font-bold text-center mb-6">
-//           Create Account
-//         </h2>
-//
-//         <form onSubmit={handleSubmit} className="space-y-4">
-//
-//           <input
-//             type="text"
-//             name="name"
-//             placeholder="Full Name"
-//             value={formData.name}
-//             onChange={handleChange}
-//             className="w-full px-4 py-2 border rounded-lg"
-//             required
-//           />
-//
-//           <input
-//             type="email"
-//             name="email"
-//             placeholder="Email"
-//             value={formData.email}
-//             onChange={handleChange}
-//             className="w-full px-4 py-2 border rounded-lg"
-//             required
-//           />
-//
-//           <input
-//             type="password"
-//             name="password"
-//             placeholder="Password"
-//             value={formData.password}
-//             onChange={handleChange}
-//             className="w-full px-4 py-2 border rounded-lg"
-//             required
-//           />
-//
-//           <select
-//             name="role"
-//             value={formData.role}
-//             onChange={handleChange}
-//             className="w-full px-4 py-2 border rounded-lg"
-//           >
-//             <option value="ROLE_USER">User</option>
-//             <option value="ROLE_NGO">NGO</option>
-//           </select>
-//
-//           {formData.role === "ROLE_NGO" && (
-//             <input
-//               type="file"
-//               accept=".pdf,.jpg,.png"
-//               onChange={handleFileChange}
-//               className="w-full"
-//               required
-//             />
-//           )}
-//
-//           <button
-//             type="submit"
-//             className="w-full bg-blue-600 text-white py-2 rounded-lg"
-//           >
-//             Register
-//           </button>
-//
-//         </form>
-//
-//         <p className="text-center mt-4 text-sm">
-//           Already have an account?{" "}
-//           <Link to="/login" className="text-blue-600 font-semibold">
-//             Login
-//           </Link>
-//         </p>
-//
-//       </div>
-//     </div>
-//   );
-// }
-//
-// export default Register;
-
 import React, { useState, useRef } from "react";
 import API from "../api";
 import { useNavigate, Link } from "react-router-dom";
@@ -456,7 +198,15 @@ function Register() {
       formDataToSend.append("email", formData.email);
       formDataToSend.append("password", formData.password);
       formDataToSend.append("role", formData.role);
-      if (formData.role === "ROLE_NGO" && proofFile) {
+      if (formData.role === "ROLE_NGO") {
+        formDataToSend.append("organizationName", formData.organizationName);
+        formDataToSend.append("registrationNumber", formData.registrationNumber);
+        formDataToSend.append("category", formData.category);
+        formDataToSend.append("phone", formData.phone);
+        formDataToSend.append("website", formData.website);
+        formDataToSend.append("city", formData.city);
+        formDataToSend.append("state", formData.state);
+        formDataToSend.append("description", formData.description);
         formDataToSend.append("proof", proofFile);
       }
 
@@ -604,6 +354,61 @@ function Register() {
                 {/* NGO Proof Upload */}
                 {formData.role === "ROLE_NGO" && (
                   <div className="space-y-1.5">
+                     <input
+                          name="organizationName"
+                          placeholder="Organization Name"
+                          onChange={handleChange}
+                          className="input"
+                        />
+
+                        <input
+                          name="registrationNumber"
+                          placeholder="Registration Number"
+                          onChange={handleChange}
+                          className="input"
+                        />
+
+                        <input
+                          name="category"
+                          placeholder="Category (Environment / Health / Education)"
+                          onChange={handleChange}
+                          className="input"
+                        />
+
+                        <input
+                          name="phone"
+                          placeholder="Phone"
+                          onChange={handleChange}
+                          className="input"
+                        />
+
+                        <input
+                          name="website"
+                          placeholder="Website"
+                          onChange={handleChange}
+                          className="input"
+                        />
+
+                        <input
+                          name="city"
+                          placeholder="City"
+                          onChange={handleChange}
+                          className="input"
+                        />
+
+                        <input
+                          name="state"
+                          placeholder="State"
+                          onChange={handleChange}
+                          className="input"
+                        />
+
+                        <textarea
+                          name="description"
+                          placeholder="Describe your NGO"
+                          onChange={handleChange}
+                          className="input"
+                        />
                     <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-stone-600">
                       NGO Proof Document <span className="text-red-400">*</span>
                     </label>
