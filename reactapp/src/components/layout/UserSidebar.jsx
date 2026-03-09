@@ -25,6 +25,7 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
       </div>
 
       <nav className="flex flex-col gap-2 flex-1">
+
         <NavItem
           icon="dashboard"
           label="Overview"
@@ -48,11 +49,33 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
         />
 
         <NavItem
+          icon="createevent"
+          label="Create Event"
+          active={activeTab === "createEvent"}
+          onClick={() => setActiveTab("createEvent")}
+        />
+
+        <NavItem
+          icon="request"
+          label="Request Help"
+          active={activeTab === "helpRequest"}
+          onClick={() => setActiveTab("helpRequest")}
+        />
+
+        <NavItem
+          icon="donate"
+          label="Donate"
+          active={activeTab === "helpFeed"}
+          onClick={() => setActiveTab("helpFeed")}
+        />
+
+        <NavItem
           icon="sos"
           label="SOS"
           active={activeTab === "sos"}
           onClick={() => setActiveTab("sos")}
         />
+
       </nav>
 
       <button
@@ -61,9 +84,11 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
       >
         Logout
       </button>
+
     </aside>
   );
 }
+
 
 /* ================= NAV ITEM COMPONENT ================= */
 
@@ -71,25 +96,37 @@ function NavItem({ icon, label, active, onClick, badge }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition
-        ${active
+      className={
+        "group relative flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 " +
+        (active
           ? "bg-orange-100 text-orange-600"
-          : "text-gray-600 hover:bg-gray-100"
-        }`}
+          : "text-gray-600 hover:bg-orange-50 hover:text-orange-600 hover:scale-105")
+      }
     >
-      <div className="flex items-center gap-2">
+
+      {/* Active indicator */}
+      <span
+        className={
+          "absolute left-0 top-0 h-full w-1 rounded-r transition-all duration-200 " +
+          (active ? "bg-orange-500" : "bg-transparent group-hover:bg-orange-300")
+        }
+      />
+
+      <div className="flex items-center gap-2 transition-transform duration-200 group-hover:translate-x-1">
         <Icon type={icon} />
         <span>{label}</span>
       </div>
 
       {badge > 0 && (
-        <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">
+        <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full transition-transform duration-200 group-hover:scale-110">
           {badge}
         </span>
       )}
+
     </button>
   );
 }
+
 
 /* ================= ICON COMPONENT ================= */
 
@@ -97,6 +134,7 @@ function Icon({ type }) {
   const base = "w-4 h-4";
 
   switch (type) {
+
     case "dashboard":
       return (
         <svg className={base} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -115,6 +153,28 @@ function Icon({ type }) {
       return (
         <svg className={base} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path d="M5 13l4 4L19 7" />
+        </svg>
+      );
+
+    case "createevent":
+      return (
+        <svg className={base} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 8v8M8 12h8" />
+        </svg>
+      );
+
+    case "request":
+      return (
+        <svg className={base} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      );
+
+    case "donate":
+      return (
+        <svg className={base} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M12 21C12 21 4 13 4 8a4 4 0 018-1 4 4 0 018 1c0 5-8 13-8 13z"/>
         </svg>
       );
 

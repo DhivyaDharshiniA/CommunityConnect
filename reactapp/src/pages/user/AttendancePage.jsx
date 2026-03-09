@@ -12,7 +12,6 @@ export default function AttendancePage() {
   const submitAttendance = async () => {
     try {
       const res = await axios.post(
-//         `http://localhost:8080/api/attendance/mark/${eventId}`,
             `http://10.74.31.23:8080/api/attendance/mark/${eventId}`,
         {
           name,

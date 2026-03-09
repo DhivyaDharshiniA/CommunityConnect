@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import ProfilePage from "./ProfilePage";
 import ManageEventsPage from "./ManageEventsPage";
+import CreateEventPage from "./CreateEventPage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FONTS
@@ -156,7 +157,7 @@ function Sidebar({ activePage, setActivePage, pendingCount, collapsed, setCollap
       </nav>
 
       <div className="p-2 border-t border-slate-700/50 space-y-0.5">
-        <button onClick={() => setActivePage("logout")} className={`w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all ${collapsed ? "justify-center" : ""}`}>
+        <button onClick={handleLogout} className={`w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all ${collapsed ? "justify-center" : ""}`}>
           <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
           {!collapsed && "Logout"}
         </button>
@@ -213,23 +214,6 @@ function Header({ activePage, setActivePage }) {
             </div>
           )}
         </div>
-        {/* Profile */}
-{/*         <div className="relative"> */}
-{/*           <button onClick={() => { setProfOpen((o) => !o); setNotifOpen(false); }} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all"> */}
-{/*             <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white text-[9px] font-bold">GC</div> */}
-{/*             <div className="hidden sm:block text-left"><p className="text-xs font-semibold text-slate-700 leading-tight">GreenConnect</p></div> */}
-{/*             <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg> */}
-{/*           </button> */}
-{/*           {profOpen && ( */}
-{/*             <div className="absolute right-0 top-10 w-44 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden"> */}
-{/*               <div className="px-3 py-2.5 border-b border-slate-100"><p className="text-xs font-bold text-slate-700">GreenConnect NGO</p><p className="text-[10px] text-slate-400">admin@greenconnect.in</p></div> */}
-{/*               {[["View Profile", "profile"], ["Reports", "reports"]].map(([l, p]) => ( */}
-{/*                 <button key={p} onClick={() => { setActivePage(p); setProfOpen(false); }} className="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-slate-50">{l}</button> */}
-{/*               ))} */}
-{/*               <div className="border-t border-slate-100"><button onClick={() => setActivePage("logout")} className="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-red-50">Sign Out</button></div> */}
-{/*             </div> */}
-{/*           )} */}
-{/*         </div> */}
       </div>
     </header>
   );
@@ -341,102 +325,6 @@ function DashboardPage({ setActivePage, requests }) {
             </div>
           ))}
         </div>
-      </div>
-    </div>
-  );
-}
-
-// Create Event
-function CreateEventPage({ onSuccess }) {
-  const [form, setForm] = useState({ title: "", category: "", date: "", location: "", capacity: "", description: "" });
-  const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
-
-  const validate = () => {
-    const e = {};
-    if (!form.title.trim()) e.title = "Required";
-    if (!form.category) e.category = "Required";
-    if (!form.date) e.date = "Required";
-    if (!form.location.trim()) e.location = "Required";
-    if (!form.capacity || isNaN(form.capacity)) e.capacity = "Enter a number";
-    if (!form.description.trim()) e.description = "Required";
-    return e;
-  };
-
-  const submit = (e) => {
-    e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
-    setSaving(true);
-    setTimeout(() => { setSaving(false); onSuccess(); }, 1000);
-  };
-
-  const ic = (k) => `w-full px-3.5 py-2.5 rounded-xl border ${errors[k] ? "border-red-300 bg-red-50 focus:ring-red-200" : "border-slate-200 bg-white focus:ring-teal-200"} text-sm text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:border-teal-400 transition-all`;
-
-  return (
-    <div className="max-w-2xl">
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-teal-500 to-blue-500 px-6 py-4">
-          <h2 className="text-base font-bold text-white">Create New Event</h2>
-          <p className="text-teal-100/70 text-xs mt-0.5">Fill in the details to publish your community event</p>
-        </div>
-        <form onSubmit={submit} className="p-5 space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Event Title *</label>
-            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Coastal Cleanup Drive 2026" className={ic("title")} />
-            {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Category *</label>
-              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={ic("category")}>
-                <option value="">Select…</option>
-                {["Environment", "Health", "Education", "Welfare", "Community", "Sports"].map((c) => <option key={c}>{c}</option>)}
-              </select>
-              {errors.category && <p className="text-xs text-red-500 mt-1">{errors.category}</p>}
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date *</label>
-              <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={ic("date")} />
-              {errors.date && <p className="text-xs text-red-500 mt-1">{errors.date}</p>}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Location *</label>
-              <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Marina Beach, Chennai" className={ic("location")} />
-              {errors.location && <p className="text-xs text-red-500 mt-1">{errors.location}</p>}
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Capacity *</label>
-              <input type="number" min="1" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} placeholder="50" className={ic("capacity")} />
-              {errors.capacity && <p className="text-xs text-red-500 mt-1">{errors.capacity}</p>}
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Description *</label>
-            <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Describe the event, purpose and what volunteers will do…" className={ic("description") + " resize-none"} />
-            {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
-          </div>
-          {form.title && (
-            <div className="bg-teal-50 border border-teal-100 rounded-xl p-3.5">
-              <p className="text-[10px] font-bold text-teal-700 uppercase tracking-wider mb-1.5">📋 Preview</p>
-              <p className="text-sm font-bold text-slate-800">{form.title}</p>
-              <div className="flex flex-wrap gap-3 mt-1">
-                {form.category && <span className="text-xs text-slate-500">🏷 {form.category}</span>}
-                {form.date && <span className="text-xs text-slate-500">📅 {form.date}</span>}
-                {form.location && <span className="text-xs text-slate-500">📍 {form.location}</span>}
-                {form.capacity && <span className="text-xs text-slate-500">👥 {form.capacity} volunteers</span>}
-              </div>
-            </div>
-          )}
-          <div className="flex gap-3 pt-1">
-            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">
-              {saving ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Creating…</> : "Publish Event"}
-            </button>
-            <button type="button" onClick={() => setForm({ title: "", category: "", date: "", location: "", capacity: "", description: "" })} className="text-sm text-slate-500 hover:text-slate-700 font-medium px-4 py-2.5 rounded-xl hover:bg-slate-100 transition-colors">Reset</button>
-          </div>
-        </form>
       </div>
     </div>
   );
@@ -644,17 +532,10 @@ function ReportsPage({ onAction }) {
   );
 }
 
-// Logout
-function LogoutPage({ setActivePage }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full py-24">
-      <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-3xl mb-4">👋</div>
-      <h2 className="text-lg font-black text-slate-800 mb-2">See you soon!</h2>
-      <p className="text-sm text-slate-500 mb-6">You've been signed out of CommunityConnect.</p>
-      <button onClick={() => setActivePage("dashboard")} className="bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">Back to Dashboard</button>
-    </div>
-  );
-}
+const handleLogout = () => {
+  localStorage.clear();
+  window.location.href = "/";
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // APP
@@ -680,7 +561,6 @@ export default function App() {
     members: <MembersPage />,
     reports: <ReportsPage onAction={showToast} />,
     profile: <ProfilePage onAction={showToast} />,
-    logout: <LogoutPage setActivePage={setActivePage} />,
   };
 
   return (
