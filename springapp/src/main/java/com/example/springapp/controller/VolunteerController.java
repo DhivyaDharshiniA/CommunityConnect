@@ -26,6 +26,7 @@ public class VolunteerController {
     private UserRepository userRepo;
 
     // ---------------- REGISTER FOR EVENT ----------------
+
     @PostMapping("/register/{eventId}")
     public ResponseEntity<?> registerVolunteer(
             @PathVariable Long eventId,
@@ -33,29 +34,35 @@ public class VolunteerController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         try {
+
             User user = userRepo.findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             Event event = eventRepo.findById(eventId)
                     .orElseThrow(() -> new RuntimeException("Event not found"));
 
-            // Prevent duplicate registration
             if (volunteerRepo.findByEventIdAndUserId(eventId, user.getId()).isPresent()) {
-                return ResponseEntity.badRequest()
-                        .body("You already registered for this event.");
+                return ResponseEntity.badRequest().body("You already registered.");
             }
 
             VolunteerRegistration registration = new VolunteerRegistration();
+
             registration.setSkills(request.getSkills());
             registration.setAvailability(request.getAvailability());
             registration.setMessage(request.getMessage());
+
             registration.setEvent(event);
             registration.setUser(user);
+
             registration.setStatus("PENDING");
+
+            // ⭐ CALCULATE SCORE
+            int score = calculateScore(event.getDescription(), request.getSkills());
+            registration.setScore(score);
 
             volunteerRepo.save(registration);
 
-            return ResponseEntity.ok("Registered successfully");
+            return ResponseEntity.ok("Request has been sent to the event organiser");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -133,6 +140,25 @@ public class VolunteerController {
         return ResponseEntity.ok(
                 volunteerRepo.findByUserId(user.getId())
         );
+    }
+    private int calculateScore(String description, String skills) {
+
+        if (description == null || skills == null) return 0;
+
+        String[] eventWords = description.toLowerCase().split("[,\\s]+");
+        String[] skillWords = skills.toLowerCase().split("[,\\s]+");
+
+        int score = 0;
+
+        for (String skill : skillWords) {
+            for (String word : eventWords) {
+                if (skill.trim().equals(word.trim())) {
+                    score++;
+                }
+            }
+        }
+
+        return score;
     }
 
 }
