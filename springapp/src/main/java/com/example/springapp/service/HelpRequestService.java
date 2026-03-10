@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import com.example.springapp.entity.HelpRequest;
@@ -16,6 +18,18 @@ public class HelpRequestService {
     @Autowired
     private HelpRequestRepository helpRequestRepository;
 
+    @Autowired
+    private JavaMailSender mailSender;
+
+    public void sendEmail(String to, String subject, String text) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(text);
+
+        mailSender.send(message);
+    }
     /**
      * Get all help requests.
      */
@@ -74,4 +88,5 @@ public class HelpRequestService {
         request.setStatus(RequestStatus.FLAGGED);
         return helpRequestRepository.save(request);
     }
+
 }

@@ -51,6 +51,7 @@ const handleSubmit = async (e) => {
       name: response.data.name || ""
     };
     localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("email", response.data.email);
 
     // Save role separately (optional)
     localStorage.setItem("role", user.role === "ROLE_NGO" ? "NGO" : "USER");

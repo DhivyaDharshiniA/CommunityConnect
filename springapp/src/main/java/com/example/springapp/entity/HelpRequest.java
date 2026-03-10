@@ -47,4 +47,6 @@ public class HelpRequest {
     @JsonManagedReference
     private List<Donation> donations;
 
+    private String createdBy;
+
 }
