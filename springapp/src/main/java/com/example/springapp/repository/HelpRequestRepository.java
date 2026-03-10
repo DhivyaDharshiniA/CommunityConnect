@@ -15,4 +15,6 @@ public interface HelpRequestRepository extends JpaRepository<HelpRequest, Long> 
 
     List<HelpRequest> findByContactNumber(String contactNumber);
 
+    List<HelpRequest> findByCreatedBy(String createdBy);
+
 }

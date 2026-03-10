@@ -1,5 +1,6 @@
 package com.example.springapp.controller;
 
+import com.example.springapp.repository.UserRepository;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
@@ -29,6 +30,9 @@ public class HelpRequestController {
     @Autowired
     private HelpRequestRepository helpRequestRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @PostMapping("/create")
     public HelpRequest createRequest(
             @RequestParam String title,
@@ -37,6 +41,7 @@ public class HelpRequestController {
             @RequestParam Double amountNeeded,
             @RequestParam String contactNumber,
             @RequestParam String location,
+            @RequestParam String createdBy,
             @RequestParam(required = false) MultipartFile medicalDoc,
             @RequestParam(required = false) MultipartFile feeReceipt
     ) throws Exception {
@@ -49,6 +54,7 @@ public class HelpRequestController {
         request.setAmountNeeded(amountNeeded);
         request.setContactNumber(contactNumber);
         request.setLocation(location);
+        request.setCreatedBy(createdBy);
 
         if (medicalDoc != null) {
             String medicalFile = fileStorageService.saveFile(medicalDoc);
@@ -69,7 +75,23 @@ public class HelpRequestController {
             request.setStatus(RequestStatus.PENDING);
         }
 
-        return helpRequestRepository.save(request);
+//        return helpRequestRepository.save(request);
+        HelpRequest savedRequest = helpRequestRepository.save(request);
+
+        userRepository.findAll().forEach(user -> {
+
+            String subject = "🚨 New Help Request Posted";
+
+            String message =
+                    "Title: " + savedRequest.getTitle() + "\n" +
+                            "Category: " + savedRequest.getCategory() + "\n" +
+                            "Location: " + savedRequest.getLocation() + "\n" +
+                            "Amount Needed: ₹" + savedRequest.getAmountNeeded();
+
+            service.sendEmail(user.getEmail(), subject, message);
+        });
+
+        return savedRequest;
     }
 
     @GetMapping("/all")
@@ -96,6 +118,11 @@ public class HelpRequestController {
     public String delete(@PathVariable Long id) {
         service.deleteRequest(id);
         return "Request Deleted";
+    }
+
+    @GetMapping("/my/{email}")
+    public List<HelpRequest> getMyRequests(@PathVariable String email) {
+        return helpRequestRepository.findByCreatedBy(email);
     }
 
     @GetMapping("/pending")

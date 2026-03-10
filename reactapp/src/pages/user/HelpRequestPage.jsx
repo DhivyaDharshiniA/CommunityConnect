@@ -1,39 +1,233 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
-const categories = [
-  { id: "medical", label: "Medical", icon: "🏥", desc: "Hospital bills, treatments" },
-  { id: "education", label: "Education", icon: "📚", desc: "Tuition fees, books" },
-  { id: "disaster", label: "Disaster Relief", icon: "🏠", desc: "Flood, fire, earthquake" },
-  { id: "food", label: "Food & Nutrition", icon: "🍱", desc: "Meals, groceries" },
-  { id: "other", label: "Other", icon: "💛", desc: "Any urgent need" },
+/* ── Constants ─────────────────────────────────────────────────────────────── */
+const CATEGORIES = [
+  { id: "medical",   label: "Medical",        icon: "🏥", desc: "Hospital bills & treatments",  color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+  { id: "education", label: "Education",       icon: "📚", desc: "Tuition fees & books",          color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe" },
+  { id: "disaster",  label: "Disaster Relief", icon: "🏠", desc: "Flood, fire, earthquake",       color: "#f59e0b", bg: "#fffbeb", border: "#fde68a" },
+  { id: "food",      label: "Food & Nutrition",icon: "🍱", desc: "Meals & groceries",             color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+  { id: "other",     label: "Other",           icon: "💛", desc: "Any urgent need",               color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" },
 ];
 
+const STATUS_STYLE = {
+  PENDING:  { color: "#d97706", bg: "#fffbeb", border: "#fde68a", label: "Pending" },
+  APPROVED: { color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", label: "Approved" },
+  REJECTED: { color: "#dc2626", bg: "#fef2f2", border: "#fecaca", label: "Rejected" },
+  CLOSED:   { color: "#64748b", bg: "#f8fafc", border: "#e2e8f0", label: "Closed" },
+};
+
+const getCatMeta = (id) => CATEGORIES.find(c => c.id === id) || CATEGORIES[4];
+
+/* ── Progress Bar (step indicator) ────────────────────────────────────────── */
+function StepBar({ step }) {
+  const steps = ["Basic Info", "Details", "Documents"];
+  return (
+    <div style={{ display: "flex", alignItems: "center", marginBottom: 28 }}>
+      {steps.map((s, i) => {
+        const num   = i + 1;
+        const done  = step > num;
+        const active = step === num;
+        return (
+          <div key={i} style={{ display: "flex", alignItems: "center", flex: i < 2 ? 1 : "none" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: "50%",
+                background: done ? "#16a34a" : active ? "#f97316" : "#f1f5f9",
+                border: `2px solid ${done ? "#16a34a" : active ? "#f97316" : "#e2e8f0"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: done ? 14 : 13, fontWeight: 800,
+                color: done || active ? "#fff" : "#94a3b8",
+                transition: "all 0.25s",
+                boxShadow: active ? "0 0 0 4px #f9731622" : "none",
+              }}>
+                {done ? "✓" : num}
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 700, color: active ? "#f97316" : done ? "#16a34a" : "#94a3b8", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+                {s}
+              </span>
+            </div>
+            {i < 2 && (
+              <div style={{ flex: 1, height: 2, background: done ? "#16a34a" : "#e2e8f0", margin: "0 8px", marginBottom: 18, transition: "background 0.3s" }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Request Card ──────────────────────────────────────────────────────────── */
+function RequestCard({ req, showStatus }) {
+  const cat = getCatMeta(req.category);
+  const st  = STATUS_STYLE[req.status?.toUpperCase()] || STATUS_STYLE.PENDING;
+  const pct = req.amountNeeded > 0
+    ? Math.min(100, Math.round((req.amountRaised / req.amountNeeded) * 100))
+    : 0;
+
+  return (
+    <div style={{
+      background: "#fff",
+      border: "1.5px solid #e2e8f0",
+      borderRadius: 18,
+      overflow: "hidden",
+      boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+      transition: "transform 0.2s, box-shadow 0.2s",
+    }}
+      onMouseOver={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(0,0,0,0.1)"; }}
+      onMouseOut={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.05)"; }}
+    >
+      {/* Color strip */}
+      <div style={{ height: 5, background: `linear-gradient(90deg, ${cat.color}, ${cat.color}88)` }} />
+
+      <div style={{ padding: "18px 20px" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flex: 1 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 11,
+              background: cat.bg, border: `1.5px solid ${cat.border}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18, flexShrink: 0,
+            }}>{cat.icon}</div>
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#0f172a", lineHeight: 1.3, fontFamily: "'Outfit', sans-serif" }}>
+                {req.title}
+              </h3>
+              <span style={{
+                display: "inline-block", marginTop: 4,
+                fontSize: 10, fontWeight: 700, color: cat.color,
+                background: cat.bg, border: `1px solid ${cat.border}`,
+                padding: "2px 8px", borderRadius: 99, letterSpacing: "0.04em",
+              }}>{cat.label}</span>
+            </div>
+          </div>
+          {showStatus && (
+            <span style={{
+              fontSize: 10, fontWeight: 800,
+              color: st.color, background: st.bg,
+              border: `1px solid ${st.border}`,
+              padding: "3px 10px", borderRadius: 99,
+              letterSpacing: "0.06em", textTransform: "uppercase",
+              flexShrink: 0,
+            }}>{st.label}</span>
+          )}
+        </div>
+
+        {/* Description */}
+        <p style={{
+          margin: "0 0 14px", fontSize: 12, color: "#475569",
+          lineHeight: 1.65,
+          display: "-webkit-box", WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical", overflow: "hidden",
+          fontFamily: "'Outfit', sans-serif",
+        }}>{req.description}</p>
+
+        {/* Funding progress */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <div>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.07em", textTransform: "uppercase" }}>Raised</span>
+              <span style={{ fontSize: 16, fontWeight: 900, color: "#0f172a", fontFamily: "'Outfit', sans-serif", marginLeft: 6 }}>
+                ₹{(req.amountRaised || 0).toLocaleString()}
+              </span>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.07em", textTransform: "uppercase" }}>Goal</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#475569", marginLeft: 6, fontFamily: "'Outfit', sans-serif" }}>
+                ₹{(req.amountNeeded || 0).toLocaleString()}
+              </span>
+            </div>
+          </div>
+          <div style={{ height: 7, background: "#f1f5f9", borderRadius: 99, overflow: "hidden", position: "relative" }}>
+            <div style={{
+              height: "100%", width: `${pct}%`,
+              background: pct >= 100 ? "#16a34a" : pct >= 60 ? cat.color : `${cat.color}bb`,
+              borderRadius: 99,
+              boxShadow: `0 0 8px ${cat.color}44`,
+              transition: "width 0.8s ease",
+            }} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: cat.color }}>{pct}% funded</span>
+            <span style={{ fontSize: 10, color: "#94a3b8" }}>📍 {req.location}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── File Upload Box ───────────────────────────────────────────────────────── */
+function FileBox({ label, hint, icon, file, onChange, id }) {
+  return (
+    <div
+      onClick={() => document.getElementById(id).click()}
+      style={{
+        flex: 1, cursor: "pointer",
+        borderRadius: 14, border: `2px dashed ${file ? "#f97316" : "#e2e8f0"}`,
+        padding: "22px 16px", textAlign: "center",
+        background: file ? "#fff7ed" : "#f8fafc",
+        transition: "all 0.2s",
+      }}
+      onMouseOver={e => { e.currentTarget.style.borderColor = "#f97316"; e.currentTarget.style.background = "#fff7ed"; }}
+      onMouseOut={e => { if (!file) { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.background = "#f8fafc"; } }}
+    >
+      <input id={id} type="file" style={{ display: "none" }} onChange={onChange} />
+      <div style={{ fontSize: 32, marginBottom: 8 }}>{file ? "✅" : icon}</div>
+      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#334155", fontFamily: "'Outfit', sans-serif" }}>
+        {file ? file.name : label}
+      </p>
+      <p style={{ margin: "5px 0 0", fontSize: 11, color: "#94a3b8" }}>{file ? "Click to change" : hint}</p>
+    </div>
+  );
+}
+
+/* ── Main Component ────────────────────────────────────────────────────────── */
 export default function HelpRequestPage() {
-  const [step, setStep] = useState(1);
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
+  const [activeTab, setActiveTab] = useState("create");
+  const [allRequests, setAllRequests] = useState([]);
+  const [myRequests, setMyRequests]   = useState([]);
+
+  // Form state
+  const [step, setStep]               = useState(1);
+  const [title, setTitle]             = useState("");
+  const [category, setCategory]       = useState("");
   const [description, setDescription] = useState("");
   const [amountNeeded, setAmountNeeded] = useState("");
   const [contactNumber, setContactNumber] = useState("");
-  const [location, setLocation] = useState("");
-  const [medicalDoc, setMedicalDoc] = useState(null);
-  const [feeReceipt, setFeeReceipt] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [location, setLocation]       = useState("");
+  const [medicalDoc, setMedicalDoc]   = useState(null);
+  const [feeReceipt, setFeeReceipt]   = useState(null);
+  const [submitted, setSubmitted]     = useState(false);
+  const [errors, setErrors]           = useState({});
+  const [submitting, setSubmitting]   = useState(false);
+
+  const userEmail = localStorage.getItem("email");
+
+  useEffect(() => {
+    axios.get("http://localhost:8080/api/help/all")
+      .then(res => setAllRequests(res.data))
+      .catch(console.error);
+    if (userEmail) {
+      axios.get(`http://localhost:8080/api/help/my/${userEmail}`)
+        .then(res => setMyRequests(res.data))
+        .catch(console.error);
+    }
+  }, [userEmail]);
 
   const validate = (s) => {
     const e = {};
     if (s === 1) {
-      if (!title.trim()) e.title = "Please enter a title";
-      if (!category) e.category = "Please select a category";
-      if (!description.trim()) e.description = "Please describe your need";
+      if (!title.trim())       e.title       = "Title is required";
+      if (!category)           e.category    = "Please select a category";
+      if (!description.trim()) e.description = "Description is required";
     }
     if (s === 2) {
       if (!amountNeeded || isNaN(amountNeeded) || Number(amountNeeded) <= 0)
-        e.amountNeeded = "Enter a valid amount";
+        e.amountNeeded  = "Enter a valid amount";
       if (!contactNumber.trim()) e.contactNumber = "Contact number is required";
-      if (!location.trim()) e.location = "Location is required";
+      if (!location.trim())      e.location      = "Location is required";
     }
     return e;
   };
@@ -45,264 +239,446 @@ export default function HelpRequestPage() {
     setStep(s => s + 1);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const e = validate(2);
     if (Object.keys(e).length) { setErrors(e); return; }
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("category", category);
-    formData.append("description", description);
-    formData.append("amountNeeded", amountNeeded);
-    formData.append("contactNumber", contactNumber);
-    formData.append("location", location);
-    if (medicalDoc) formData.append("medicalDoc", medicalDoc);
-    if (feeReceipt) formData.append("feeReceipt", feeReceipt);
-    axios.post("http://localhost:8080/api/help/create", formData)
-      .then(() => setSubmitted(true))
-      .catch(err => console.error(err));
-    setSubmitted(true);
+    setSubmitting(true);
+    const fd = new FormData();
+    fd.append("title", title);
+    fd.append("category", category);
+    fd.append("description", description);
+    fd.append("amountNeeded", amountNeeded);
+    fd.append("contactNumber", contactNumber);
+    fd.append("location", location);
+    fd.append("createdBy", userEmail);
+    if (medicalDoc)  fd.append("medicalDoc",  medicalDoc);
+    if (feeReceipt)  fd.append("feeReceipt",  feeReceipt);
+    try {
+      await axios.post("http://localhost:8080/api/help/create", fd);
+      setSubmitted(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const reset = () => {
-    setSubmitted(false); setStep(1); setTitle(""); setCategory("");
-    setDescription(""); setAmountNeeded(""); setContactNumber("");
-    setLocation(""); setMedicalDoc(null); setFeeReceipt(null); setErrors({});
+    setSubmitted(false); setStep(1);
+    setTitle(""); setCategory(""); setDescription("");
+    setAmountNeeded(""); setContactNumber(""); setLocation("");
+    setMedicalDoc(null); setFeeReceipt(null); setErrors({});
   };
 
-  const stepLabels = ["Your Story", "Details & Contact", "Documents"];
+  const inputStyle = (err) => ({
+    width: "100%", padding: "10px 13px",
+    borderRadius: 10, border: `1.5px solid ${err ? "#fca5a5" : "#e2e8f0"}`,
+    fontSize: 13, fontFamily: "'Outfit', sans-serif",
+    color: "#0f172a", background: err ? "#fff5f5" : "#fff",
+    outline: "none", boxSizing: "border-box",
+    transition: "border-color 0.15s",
+  });
+  const labelStyle = {
+    fontSize: 11, fontWeight: 800, color: "#64748b",
+    letterSpacing: "0.08em", textTransform: "uppercase",
+    display: "block", marginBottom: 6,
+    fontFamily: "'Outfit', sans-serif",
+  };
+  const errStyle = { fontSize: 11, color: "#ef4444", marginTop: 4, fontWeight: 600 };
 
-  const inputCls = (err) =>
-    `w-full px-4 py-2.5 rounded-lg border text-sm font-sans transition-all duration-150 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400 ${err ? "border-red-400 bg-red-50" : "border-gray-200 hover:border-orange-300"}`;
-
-  const FileBox = ({ label, hint, icon, file, onChange, id }) => (
-    <div
-      onClick={() => document.getElementById(id).click()}
-      className={`flex-1 cursor-pointer rounded-xl border-2 border-dashed p-5 text-center transition-all duration-150 hover:border-orange-400 hover:bg-orange-50 ${file ? "border-orange-400 bg-orange-50" : "border-gray-200 bg-gray-50"}`}
-    >
-      <input id={id} type="file" className="hidden" onChange={onChange} />
-      <div className="text-2xl mb-1">{file ? "✅" : icon}</div>
-      <p className="text-sm font-semibold text-gray-700 font-serif">{file ? file.name : label}</p>
-      <p className="text-xs text-gray-400 mt-1">{file ? "Tap to change" : hint}</p>
-    </div>
-  );
-
-  if (submitted) return (
-    <div className="max-w-xl mx-auto mt-10">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap'); * { font-family: 'DM Sans', sans-serif; } h1,h2,h3,.font-serif { font-family: 'DM Serif Display', serif; }`}</style>
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🌟</div>
-        <h2 className="text-2xl font-serif text-gray-800 mb-2">Request Submitted!</h2>
-        <p className="text-gray-500 text-sm leading-relaxed mb-6">Your help request has been received. Our team will review it and connect you with the right support soon.</p>
-        <div className="inline-block bg-orange-50 border border-orange-200 rounded-lg px-5 py-2.5 mb-6">
-          <span className="text-xs text-orange-400 font-semibold uppercase tracking-wide">Request ID </span>
-          <span className="text-orange-600 font-bold font-mono">#{Math.random().toString(36).substr(2, 8).toUpperCase()}</span>
-        </div>
-        <div><button onClick={reset} className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors">Submit Another Request</button></div>
-      </div>
-    </div>
-  );
+  const TABS = [
+    { id: "create", label: "✦ Create Request",  count: null },
+    { id: "all",    label: "🌐 All Requests",    count: allRequests.length },
+    { id: "my",     label: "👤 My Requests",     count: myRequests.length  },
+  ];
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap'); * { font-family: 'DM Sans', sans-serif; } h1,h2,h3,.font-serif { font-family: 'DM Serif Display', serif; } @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } } .fade-up { animation: fadeUp 0.3s ease; }`}</style>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Syne:wght@700;800;900&display=swap');
+        @keyframes fadeUp   { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+        @keyframes scaleIn  { from{opacity:0;transform:scale(0.93)} to{opacity:1;transform:scale(1)} }
+        @keyframes confetti { 0%{transform:rotate(0deg) scale(1)} 50%{transform:rotate(8deg) scale(1.05)} 100%{transform:rotate(0deg) scale(1)} }
+        .hrp-input:focus { border-color: #f97316 !important; box-shadow: 0 0 0 3px rgba(249,115,22,0.12) !important; }
+        .hrp-textarea:focus { border-color: #f97316 !important; box-shadow: 0 0 0 3px rgba(249,115,22,0.12) !important; }
+        .req-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:16px; }
+      `}</style>
 
-      {/* Page Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-orange-500 text-xl">🤝</span>
-          <h1 className="text-2xl font-serif text-gray-800">Request Help</h1>
-        </div>
-        <p className="text-sm text-gray-400">Fill out the form below and our community will connect with you.</p>
-      </div>
+      <div style={{ fontFamily: "'Outfit', sans-serif" }}>
 
-      {/* Progress Steps */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4 mb-4">
-        <div className="flex items-center">
-          {stepLabels.map((label, i) => {
-            const s = i + 1;
-            const done = step > s;
-            const active = step === s;
-            return (
-              <div key={s} className="flex items-center flex-1 last:flex-none">
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${done ? "bg-orange-500 text-white" : active ? "bg-orange-500 text-white ring-4 ring-orange-100" : "bg-gray-100 text-gray-400"}`}>
-                    {done ? "✓" : s}
-                  </div>
-                  <span className={`text-xs font-medium hidden sm:block ${active ? "text-orange-500" : done ? "text-gray-500" : "text-gray-300"}`}>{label}</span>
+        {/* ── Page Header ── */}
+        <div style={{
+          background: "linear-gradient(135deg, #431407 0%, #9a3412 40%, #ea580c 80%, #f97316 100%)",
+          borderRadius: 22, padding: "28px 30px 26px",
+          marginBottom: 22, position: "relative", overflow: "hidden",
+          animation: "fadeUp 0.4s ease both",
+        }}>
+          {/* Decorative circles */}
+          {[[160,160,-50,-40,0.07],[90,90,null,-20,0.09,120],[55,55,18,null,0.06,190]].map(([w,h,top,bottom,op,right='-30'],i)=>(
+            <div key={i} style={{
+              position:"absolute", width:w, height:h, borderRadius:"50%",
+              background:"rgba(255,255,255,0.12)",
+              top:top??undefined, bottom:bottom??undefined, right,
+              animation:`confetti ${3+i*0.8}s ease-in-out infinite`,
+            }}/>
+          ))}
+          {/* Grid texture */}
+          <div style={{
+            position:"absolute", inset:0, opacity:0.04,
+            backgroundImage:"radial-gradient(circle, #fff 1px, transparent 1px)",
+            backgroundSize:"22px 22px",
+          }}/>
+
+          <div style={{ position:"relative", zIndex:1, display:"flex", alignItems:"flex-start", justifyContent:"space-between", flexWrap:"wrap", gap:16 }}>
+            <div>
+              <p style={{ margin:"0 0 4px", fontSize:10, fontWeight:800, letterSpacing:"0.15em", textTransform:"uppercase", color:"rgba(255,255,255,0.55)" }}>
+                ✦ Community Support
+              </p>
+              <h1 style={{ fontFamily:"'Syne', sans-serif", fontSize:30, fontWeight:900, color:"#fff", margin:"0 0 4px", letterSpacing:"-0.02em" }}>
+                Help Requests
+              </h1>
+              <p style={{ margin:0, fontSize:13, color:"rgba(255,255,255,0.65)" }}>
+                Submit a request or support someone in need
+              </p>
+            </div>
+
+            <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+              {[
+                { icon:"🙏", label:"Total Requests", value: allRequests.length },
+                { icon:"👤", label:"My Requests",    value: myRequests.length  },
+              ].map((s,i) => (
+                <div key={i} style={{
+                  background:"rgba(255,255,255,0.12)", backdropFilter:"blur(8px)",
+                  border:"1px solid rgba(255,255,255,0.2)",
+                  borderRadius:14, padding:"12px 18px",
+                  animation:`fadeUp 0.4s ease ${0.1+i*0.08}s both`,
+                }}>
+                  <p style={{ margin:0, fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.6)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
+                    {s.icon} {s.label}
+                  </p>
+                  <p style={{ margin:"4px 0 0", fontSize:26, fontWeight:900, color:"#fff", fontFamily:"'Syne', sans-serif", lineHeight:1 }}>
+                    {s.value}
+                  </p>
                 </div>
-                {s < 3 && <div className={`flex-1 h-0.5 mx-3 rounded transition-all duration-300 ${step > s ? "bg-orange-400" : "bg-gray-100"}`} />}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-7">
-
-        {/* Step 1 */}
-        {step === 1 && (
-          <div className="fade-up">
-            <h2 className="text-xl font-serif text-gray-800 mb-1">Tell us your story</h2>
-            <p className="text-xs text-gray-400 mb-6">Every request matters. Share what you need help with.</p>
-
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              Request Title <span className="text-orange-400">*</span>
-            </label>
-            <input
-              className={inputCls(errors.title)}
-              placeholder="e.g. Help with my mother's surgery bill"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-            />
-            {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
-
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mt-5 mb-2">
-              Category <span className="text-orange-400">*</span>
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-1">
-              {categories.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => setCategory(c.id)}
-                  className={`relative rounded-xl p-3.5 text-left border-2 transition-all duration-150 hover:border-orange-300 hover:bg-orange-50 ${category === c.id ? "border-orange-500 bg-orange-50" : "border-gray-100 bg-gray-50"}`}
-                >
-                  {category === c.id && <span className="absolute top-2 right-2 text-orange-500 text-xs font-bold">✓</span>}
-                  <div className="text-xl mb-1">{c.icon}</div>
-                  <div className={`text-xs font-semibold font-serif ${category === c.id ? "text-orange-600" : "text-gray-700"}`}>{c.label}</div>
-                  <div className="text-xs text-gray-400 mt-0.5 leading-tight">{c.desc}</div>
-                </button>
               ))}
             </div>
-            {errors.category && <p className="text-xs text-red-500 mt-1">{errors.category}</p>}
-
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mt-5 mb-1.5">
-              Describe Your Need <span className="text-orange-400">*</span>
-            </label>
-            <textarea
-              className={`${inputCls(errors.description)} resize-none`}
-              rows={4}
-              placeholder="Please share your situation in detail. The more you share, the better we can help..."
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-            />
-            <div className="flex justify-between items-center mt-0.5">
-              {errors.description ? <p className="text-xs text-red-500">{errors.description}</p> : <span />}
-              <span className="text-xs text-gray-300">{description.length} chars</span>
-            </div>
           </div>
-        )}
+        </div>
 
-        {/* Step 2 */}
-        {step === 2 && (
-          <div className="fade-up">
-            <h2 className="text-xl font-serif text-gray-800 mb-1">Support Details</h2>
-            <p className="text-xs text-gray-400 mb-6">Help us understand the scope and reach you if needed.</p>
+        {/* ── Tab bar ── */}
+        <div style={{
+          background:"#fff", borderRadius:16, border:"1.5px solid #e2e8f0",
+          padding:"5px", marginBottom:22,
+          display:"flex", gap:4,
+          boxShadow:"0 2px 8px rgba(0,0,0,0.04)",
+          animation:"fadeUp 0.4s ease 0.08s both",
+        }}>
+          {TABS.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              style={{
+                flex:1, padding:"10px 8px", borderRadius:12, border:"none",
+                background: activeTab === tab.id
+                  ? "linear-gradient(135deg, #431407, #ea580c 60%, #f97316)"
+                  : "transparent",
+                fontSize:12, fontWeight:700,
+                color: activeTab === tab.id ? "#fff" : "#64748b",
+                cursor:"pointer", transition:"all 0.2s",
+                fontFamily:"'Outfit', sans-serif",
+                display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                boxShadow: activeTab === tab.id ? "0 4px 14px rgba(234,88,12,0.35)" : "none",
+              }}
+              onMouseOver={e => { if(activeTab!==tab.id) e.currentTarget.style.background="#f8fafc"; }}
+              onMouseOut={e => { if(activeTab!==tab.id) e.currentTarget.style.background="transparent"; }}
+            >
+              {tab.label}
+              {tab.count !== null && (
+                <span style={{
+                  background: activeTab===tab.id ? "rgba(255,255,255,0.25)" : "#f1f5f9",
+                  color: activeTab===tab.id ? "#fff" : "#94a3b8",
+                  fontSize:10, fontWeight:800,
+                  padding:"1px 7px", borderRadius:99,
+                }}>{tab.count}</span>
+              )}
+            </button>
+          ))}
+        </div>
 
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              Amount Needed (₹) <span className="text-orange-400">*</span>
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₹</span>
-              <input
-                className={`${inputCls(errors.amountNeeded)} pl-8`}
-                type="number"
-                placeholder="0"
-                value={amountNeeded}
-                onChange={e => setAmountNeeded(e.target.value)}
-              />
-            </div>
-            {errors.amountNeeded && <p className="text-xs text-red-500 mt-1">{errors.amountNeeded}</p>}
-            {amountNeeded > 0 && (
-              <div className="mt-2 inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5">
-                <span className="text-orange-400 text-xs">Requesting</span>
-                <span className="text-orange-600 text-sm font-bold font-serif">₹{Number(amountNeeded).toLocaleString("en-IN")}</span>
+        {/* ── CREATE TAB ── */}
+        {activeTab === "create" && (
+          <div style={{ animation:"fadeUp 0.35s ease both" }}>
+            {submitted ? (
+              /* Success state */
+              <div style={{
+                background:"#fff", borderRadius:22, border:"1.5px solid #e2e8f0",
+                padding:"60px 30px", textAlign:"center",
+                boxShadow:"0 4px 24px rgba(0,0,0,0.06)",
+                animation:"scaleIn 0.4s ease both",
+              }}>
+                <div style={{ fontSize:68, marginBottom:16, animation:"confetti 1s ease-in-out infinite" }}>🎉</div>
+                <h2 style={{ fontFamily:"'Syne', sans-serif", fontSize:24, fontWeight:900, color:"#0f172a", margin:"0 0 8px" }}>
+                  Request Submitted!
+                </h2>
+                <p style={{ fontSize:13, color:"#64748b", margin:"0 0 28px" }}>
+                  Your help request has been received. We'll review it shortly.
+                </p>
+                <button onClick={reset} style={{
+                  background:"linear-gradient(135deg,#ea580c,#f97316)",
+                  color:"#fff", border:"none",
+                  padding:"12px 32px", borderRadius:12,
+                  fontSize:14, fontWeight:700, cursor:"pointer",
+                  fontFamily:"'Outfit', sans-serif",
+                  boxShadow:"0 4px 18px rgba(234,88,12,0.35)",
+                }}>+ Submit Another Request</button>
+              </div>
+            ) : (
+              <div style={{
+                background:"#fff", borderRadius:22,
+                border:"1.5px solid #e2e8f0",
+                overflow:"hidden",
+                boxShadow:"0 4px 24px rgba(0,0,0,0.06)",
+              }}>
+                {/* Form header */}
+                <div style={{
+                  background:"linear-gradient(135deg,#fff7ed,#fff)",
+                  padding:"22px 28px 18px",
+                  borderBottom:"1.5px solid #f1f5f9",
+                }}>
+                  <p style={{ margin:"0 0 2px", fontSize:11, fontWeight:800, color:"#ea580c", letterSpacing:"0.1em", textTransform:"uppercase" }}>
+                    Step {step} of 3
+                  </p>
+                  <h2 style={{ fontFamily:"'Syne', sans-serif", fontSize:20, fontWeight:800, color:"#0f172a", margin:0 }}>
+                    {step===1 ? "Tell us about your need" : step===2 ? "Contact & financial details" : "Supporting documents"}
+                  </h2>
+                </div>
+
+                <div style={{ padding:"24px 28px" }}>
+                  <StepBar step={step} />
+
+                  {/* ── STEP 1 ── */}
+                  {step === 1 && (
+                    <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
+                      <div>
+                        <label style={labelStyle}>Request Title</label>
+                        <input
+                          className="hrp-input"
+                          style={inputStyle(errors.title)}
+                          placeholder="e.g. Need help for my father's surgery…"
+                          value={title}
+                          onChange={e => setTitle(e.target.value)}
+                        />
+                        {errors.title && <p style={errStyle}>⚠ {errors.title}</p>}
+                      </div>
+
+                      <div>
+                        <label style={labelStyle}>Category</label>
+                        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:10 }}>
+                          {CATEGORIES.map(c => (
+                            <button key={c.id} onClick={() => setCategory(c.id)} style={{
+                              border: `2px solid ${category===c.id ? c.color : "#e2e8f0"}`,
+                              background: category===c.id ? c.bg : "#f8fafc",
+                              borderRadius:12, padding:"12px 14px",
+                              cursor:"pointer", textAlign:"left",
+                              transition:"all 0.15s",
+                              fontFamily:"'Outfit', sans-serif",
+                            }}>
+                              <div style={{ fontSize:22, marginBottom:5 }}>{c.icon}</div>
+                              <p style={{ margin:0, fontSize:12, fontWeight:800, color: category===c.id ? c.color : "#334155" }}>{c.label}</p>
+                              <p style={{ margin:"2px 0 0", fontSize:10, color:"#94a3b8", fontWeight:500 }}>{c.desc}</p>
+                            </button>
+                          ))}
+                        </div>
+                        {errors.category && <p style={errStyle}>⚠ {errors.category}</p>}
+                      </div>
+
+                      <div>
+                        <label style={labelStyle}>Description</label>
+                        <textarea
+                          className="hrp-textarea"
+                          style={{ ...inputStyle(errors.description), resize:"vertical" }}
+                          rows={4}
+                          placeholder="Describe your situation in detail. Be specific about why you need help…"
+                          value={description}
+                          onChange={e => setDescription(e.target.value)}
+                        />
+                        {errors.description && <p style={errStyle}>⚠ {errors.description}</p>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 2 ── */}
+                  {step === 2 && (
+                    <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
+                      <div>
+                        <label style={labelStyle}>Amount Needed (₹)</label>
+                        <div style={{ position:"relative" }}>
+                          <span style={{
+                            position:"absolute", left:13, top:"50%", transform:"translateY(-50%)",
+                            fontSize:15, fontWeight:800, color:"#94a3b8",
+                          }}>₹</span>
+                          <input
+                            className="hrp-input"
+                            type="number"
+                            style={{ ...inputStyle(errors.amountNeeded), paddingLeft:28 }}
+                            placeholder="0.00"
+                            value={amountNeeded}
+                            onChange={e => setAmountNeeded(e.target.value)}
+                          />
+                        </div>
+                        {errors.amountNeeded && <p style={errStyle}>⚠ {errors.amountNeeded}</p>}
+                      </div>
+
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+                        <div>
+                          <label style={labelStyle}>Contact Number</label>
+                          <input
+                            className="hrp-input"
+                            style={inputStyle(errors.contactNumber)}
+                            placeholder="+91 XXXXX XXXXX"
+                            value={contactNumber}
+                            onChange={e => setContactNumber(e.target.value)}
+                          />
+                          {errors.contactNumber && <p style={errStyle}>⚠ {errors.contactNumber}</p>}
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Location</label>
+                          <input
+                            className="hrp-input"
+                            style={inputStyle(errors.location)}
+                            placeholder="City, State"
+                            value={location}
+                            onChange={e => setLocation(e.target.value)}
+                          />
+                          {errors.location && <p style={errStyle}>⚠ {errors.location}</p>}
+                        </div>
+                      </div>
+
+                      {/* Amount preview card */}
+                      {amountNeeded > 0 && (
+                        <div style={{
+                          background:"linear-gradient(135deg,#fff7ed,#fff)",
+                          border:"1.5px solid #fed7aa",
+                          borderRadius:14, padding:"16px 18px",
+                          display:"flex", alignItems:"center", gap:14,
+                        }}>
+                          <div style={{ fontSize:32 }}>💰</div>
+                          <div>
+                            <p style={{ margin:0, fontSize:10, fontWeight:700, color:"#ea580c", letterSpacing:"0.08em", textTransform:"uppercase" }}>
+                              Requesting
+                            </p>
+                            <p style={{ margin:"2px 0 0", fontFamily:"'Syne', sans-serif", fontSize:26, fontWeight:900, color:"#0f172a" }}>
+                              ₹{Number(amountNeeded).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── STEP 3 ── */}
+                  {step === 3 && (
+                    <div>
+                      <p style={{ margin:"0 0 18px", fontSize:13, color:"#64748b", lineHeight:1.6 }}>
+                        Upload supporting documents to strengthen your request. These are optional but help build trust.
+                      </p>
+                      <div style={{ display:"flex", gap:14 }}>
+                        <FileBox
+                          label="Medical Document" hint="PDF or image" icon="🏥"
+                          file={medicalDoc}
+                          onChange={e => setMedicalDoc(e.target.files[0])}
+                          id="medfile"
+                        />
+                        <FileBox
+                          label="Fee Receipt" hint="Invoice or bill" icon="🧾"
+                          file={feeReceipt}
+                          onChange={e => setFeeReceipt(e.target.files[0])}
+                          id="receiptfile"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Navigation buttons */}
+                  <div style={{ display:"flex", justifyContent: step > 1 ? "space-between" : "flex-end", marginTop:28 }}>
+                    {step > 1 && (
+                      <button onClick={() => setStep(s => s - 1)} style={{
+                        padding:"10px 22px", borderRadius:11,
+                        border:"1.5px solid #e2e8f0", background:"#f8fafc",
+                        fontSize:13, fontWeight:700, color:"#475569",
+                        cursor:"pointer", fontFamily:"'Outfit', sans-serif",
+                      }}>← Back</button>
+                    )}
+                    {step < 3 ? (
+                      <button onClick={next} style={{
+                        padding:"10px 28px", borderRadius:11,
+                        background:"linear-gradient(135deg,#ea580c,#f97316)",
+                        border:"none", color:"#fff",
+                        fontSize:13, fontWeight:700, cursor:"pointer",
+                        fontFamily:"'Outfit', sans-serif",
+                        boxShadow:"0 4px 14px rgba(234,88,12,0.3)",
+                        transition:"all 0.2s",
+                      }}
+                        onMouseOver={e => e.currentTarget.style.transform="translateY(-1px)"}
+                        onMouseOut={e => e.currentTarget.style.transform="translateY(0)"}
+                      >Continue →</button>
+                    ) : (
+                      <button onClick={handleSubmit} disabled={submitting} style={{
+                        padding:"10px 28px", borderRadius:11,
+                        background: submitting ? "#fed7aa" : "linear-gradient(135deg,#ea580c,#f97316)",
+                        border:"none", color:"#fff",
+                        fontSize:13, fontWeight:700,
+                        cursor: submitting ? "not-allowed" : "pointer",
+                        fontFamily:"'Outfit', sans-serif",
+                        boxShadow:"0 4px 14px rgba(234,88,12,0.3)",
+                      }}>
+                        {submitting ? "Submitting…" : "🙏 Submit Request"}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  Contact Number <span className="text-orange-400">*</span>
-                </label>
-                <input
-                  className={inputCls(errors.contactNumber)}
-                  placeholder="+91 00000 00000"
-                  value={contactNumber}
-                  onChange={e => setContactNumber(e.target.value)}
-                />
-                {errors.contactNumber && <p className="text-xs text-red-500 mt-1">{errors.contactNumber}</p>}
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  Location <span className="text-orange-400">*</span>
-                </label>
-                <input
-                  className={inputCls(errors.location)}
-                  placeholder="City, State"
-                  value={location}
-                  onChange={e => setLocation(e.target.value)}
-                />
-                {errors.location && <p className="text-xs text-red-500 mt-1">{errors.location}</p>}
-              </div>
-            </div>
-
-            <div className="mt-5 flex items-start gap-3 bg-orange-50 border border-orange-100 rounded-xl p-4">
-              <span className="text-orange-400 text-lg mt-0.5">🔒</span>
-              <div>
-                <p className="text-xs font-semibold text-gray-700">Your data is safe</p>
-                <p className="text-xs text-gray-400 mt-0.5">Contact details are only shared with verified donors and our support team.</p>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* Step 3 */}
-        {step === 3 && (
-          <div className="fade-up">
-            <h2 className="text-xl font-serif text-gray-800 mb-1">Supporting Documents</h2>
-            <p className="text-xs text-gray-400 mb-6">Optional but recommended — documents help build trust and speed up verification.</p>
-
-            <div className="flex gap-3 mb-6">
-              <FileBox label="Medical Document" hint="Prescription, reports, discharge summary" icon="🏥" file={medicalDoc} onChange={e => setMedicalDoc(e.target.files[0])} id="file-medical" />
-              <FileBox label="Fee Receipt / Invoice" hint="Hospital bill, fee challan, invoice" icon="🧾" file={feeReceipt} onChange={e => setFeeReceipt(e.target.files[0])} id="file-receipt" />
-            </div>
-
-            {/* Summary */}
-            <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">📋 Request Summary</p>
-              <div className="space-y-2">
-                {[
-                  ["Title", title],
-                  ["Category", categories.find(c => c.id === category)?.label],
-                  ["Amount", `₹${Number(amountNeeded).toLocaleString("en-IN")}`],
-                  ["Location", location],
-                  ["Contact", contactNumber],
-                ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between text-xs border-b border-gray-100 pb-1.5 last:border-0 last:pb-0">
-                    <span className="text-gray-400">{k}</span>
-                    <span className="text-gray-700 font-semibold">{v}</span>
-                  </div>
-                ))}
+        {/* ── ALL REQUESTS TAB ── */}
+        {activeTab === "all" && (
+          <div style={{ animation:"fadeUp 0.35s ease both" }}>
+            {allRequests.length === 0 ? (
+              <div style={{ textAlign:"center", padding:"70px 20px", background:"#fff", borderRadius:18, border:"1.5px dashed #e2e8f0" }}>
+                <div style={{ fontSize:48, marginBottom:12 }}>🙏</div>
+                <p style={{ margin:0, fontFamily:"'Syne', sans-serif", fontSize:18, fontWeight:800, color:"#475569" }}>No requests yet</p>
               </div>
-            </div>
+            ) : (
+              <div className="req-grid">
+                {allRequests.map(req => <RequestCard key={req.id} req={req} showStatus={false} />)}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Footer Nav */}
-        <div className="flex items-center justify-between mt-8 pt-5 border-t border-gray-100">
-          {step > 1
-            ? <button onClick={() => { setErrors({}); setStep(s => s - 1); }} className="text-sm text-gray-400 hover:text-gray-600 font-semibold flex items-center gap-1 transition-colors">← Back</button>
-            : <div />
-          }
-          {step < 3
-            ? <button onClick={next} className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors shadow-sm shadow-orange-200">Continue →</button>
-            : <button onClick={handleSubmit} className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-7 py-2.5 rounded-lg transition-colors shadow-sm shadow-orange-200 flex items-center gap-2">🌟 Submit Request</button>
-          }
-        </div>
+        {/* ── MY REQUESTS TAB ── */}
+        {activeTab === "my" && (
+          <div style={{ animation:"fadeUp 0.35s ease both" }}>
+            {myRequests.length === 0 ? (
+              <div style={{ textAlign:"center", padding:"70px 20px", background:"#fff", borderRadius:18, border:"1.5px dashed #e2e8f0" }}>
+                <div style={{ fontSize:48, marginBottom:12 }}>📋</div>
+                <p style={{ margin:0, fontFamily:"'Syne', sans-serif", fontSize:18, fontWeight:800, color:"#475569" }}>No requests submitted yet</p>
+                <button onClick={() => setActiveTab("create")} style={{
+                  marginTop:16, padding:"10px 24px", borderRadius:11,
+                  background:"linear-gradient(135deg,#ea580c,#f97316)",
+                  border:"none", color:"#fff",
+                  fontSize:13, fontWeight:700, cursor:"pointer",
+                  fontFamily:"'Outfit', sans-serif",
+                }}>Create a Request</button>
+              </div>
+            ) : (
+              <div className="req-grid">
+                {myRequests.map(req => <RequestCard key={req.id} req={req} showStatus={true} />)}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-
-      <p className="text-center text-xs text-gray-300 mt-4">All requests are reviewed within 24 hours · Community Guidelines apply</p>
-    </div>
+    </>
   );
 }

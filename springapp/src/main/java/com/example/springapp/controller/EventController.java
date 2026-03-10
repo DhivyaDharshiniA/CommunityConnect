@@ -54,6 +54,7 @@ public class EventController {
             @RequestParam String endDateTime,
             @RequestParam String requirements,
             @RequestParam String benefits,
+            @RequestParam int noOfVol,
             @RequestParam(required = false) MultipartFile bannerImage
     ) {
 
@@ -89,6 +90,7 @@ public class EventController {
             event.setEndDateTime(LocalDateTime.parse(endDateTime));
             event.setRequirements(requirements);
             event.setBenefits(benefits);
+            event.setNoOfVol(noOfVol);
 
             if (fileName != null) {
                 event.setBannerImage("http://localhost:8080/uploads/" + fileName);
@@ -208,6 +210,81 @@ public class EventController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error deleting event");
+        }
+    }
+
+    // -------------------- UPDATE EVENT --------------------
+    @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateEvent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String title,
+            @RequestParam String description,
+            @RequestParam String category,
+            @RequestParam String venue,
+            @RequestParam String city,
+            @RequestParam String state,
+            @RequestParam String organizerName,
+            @RequestParam String contactEmail,
+            @RequestParam String contactPhone,
+            @RequestParam String startDateTime,
+            @RequestParam String endDateTime,
+            @RequestParam String requirements,
+            @RequestParam String benefits,
+            @RequestParam(required = false) MultipartFile bannerImage
+    ) {
+
+        try {
+
+            User user = userRepo.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Event event = eventRepo.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Event not found"));
+
+            // Only creator can update
+            if (!event.getCreatedBy().getId().equals(user.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("You are not authorized to update this event");
+            }
+
+            // Update fields
+            event.setTitle(title);
+            event.setDescription(description);
+            event.setCategory(category);
+            event.setVenue(venue);
+            event.setCity(city);
+            event.setState(state);
+            event.setOrganizerName(organizerName);
+            event.setContactEmail(contactEmail);
+            event.setContactPhone(contactPhone);
+            event.setStartDateTime(LocalDateTime.parse(startDateTime));
+            event.setEndDateTime(LocalDateTime.parse(endDateTime));
+            event.setRequirements(requirements);
+            event.setBenefits(benefits);
+
+            // Handle banner update
+            if (bannerImage != null && !bannerImage.isEmpty()) {
+
+                String uploadDir = "uploads/";
+                Files.createDirectories(Paths.get(uploadDir));
+
+                String fileName = System.currentTimeMillis() + "_" +
+                        bannerImage.getOriginalFilename();
+
+                Path filePath = Paths.get(uploadDir + fileName);
+                Files.write(filePath, bannerImage.getBytes());
+
+                event.setBannerImage("http://localhost:8080/uploads/" + fileName);
+            }
+
+            eventRepo.save(event);
+
+            return ResponseEntity.ok("Event updated successfully");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error updating event");
         }
     }
 }

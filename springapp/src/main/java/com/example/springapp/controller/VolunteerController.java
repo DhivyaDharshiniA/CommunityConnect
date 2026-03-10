@@ -1,5 +1,6 @@
 package com.example.springapp.controller;
 
+import com.example.springapp.dto.MyVolunteerDTO;
 import com.example.springapp.entity.*;
 import com.example.springapp.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/volunteers")
@@ -161,4 +165,42 @@ public class VolunteerController {
         return score;
     }
 
+    @GetMapping("/my-volunteers")
+    public ResponseEntity<?> getMyVolunteers(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User ngo = userRepo.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<VolunteerRegistration> registrations =
+                volunteerRepo.findAllByNgoEvents(ngo.getId());
+
+        Map<Long, MyVolunteerDTO> map = new HashMap<>();
+
+        for (VolunteerRegistration vr : registrations) {
+
+            User user = vr.getUser();
+
+            map.putIfAbsent(user.getId(),
+                    new MyVolunteerDTO(
+                            user.getName(),
+                            user.getEmail(),
+                            new ArrayList<>(),
+                            new ArrayList<>(),
+                            0L
+                    )
+            );
+
+            MyVolunteerDTO dto = map.get(user.getId());
+
+            dto.getAppliedEvents().add(vr.getEvent().getTitle());
+            dto.getSkills().add(vr.getSkills());
+
+            dto.setTotalEventsRegistered(
+                    dto.getTotalEventsRegistered() + 1
+            );
+        }
+
+        return ResponseEntity.ok(map.values());
+    }
 }

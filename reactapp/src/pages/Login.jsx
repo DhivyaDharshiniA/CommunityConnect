@@ -41,15 +41,18 @@ function Login() {
 
       localStorage.setItem("token", response.data.token);
 
-      const user = {
-        id: response.data.id,
-        email: response.data.email,
-        role: response.data.role,
-        name: response.data.name || ""
-      };
+    // Save full user info including ID
+    const user = {
+      id: response.data.id,          // <-- backend should return user ID
+      email: response.data.email,
+      role: response.data.role,
+      name: response.data.name || ""
+    };
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("email", response.data.email);
 
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("role", user.role === "ROLE_NGO" ? "NGO" : "USER");
+    // Save role separately (optional)
+    localStorage.setItem("role", user.role === "ROLE_NGO" ? "NGO" : "USER");
 
       if (user.role === "ROLE_NGO") {
         navigate("/ngo-dashboard");
@@ -146,7 +149,6 @@ function Login() {
             Join thousands building meaningful connections every single day.
           </p>
         </div>
-
       </div>
 
       {/* RIGHT PANEL */}

@@ -27,6 +27,7 @@
 //}
 package com.example.springapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -48,6 +49,7 @@ public class VolunteerRegistration {
 
     @ManyToOne
     @JoinColumn(name = "event_id")
+    @JsonBackReference
     private Event event;
 
     @ManyToOne

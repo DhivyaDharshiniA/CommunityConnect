@@ -11,7 +11,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
-// ✅ Defined OUTSIDE the parent component — prevents remount on every keystroke
 const Field = ({ id, label, error, focused, children }) => (
   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
     <label style={{
@@ -130,9 +129,20 @@ const cats = ["Environment", "Health", "Education", "Sports", "Community"];
 
 export default function CreateEventPage({ onSuccess }) {
   const [form, setForm] = useState({
-    title: "", category: "", date: "", location: "", city: "", state: "",
-    organizerName: "", contactEmail: "", contactPhone: "",
-    description: "", requirements: "", benefits: "", bannerFile: null,
+    title: "",
+    category: "",
+    date: "",
+    location: "",
+    city: "",
+    state: "",
+    organizerName: "",
+    contactEmail: "",
+    contactPhone: "",
+    description: "",
+    requirements: "",
+    benefits: "",
+    noOfVol: "",
+    bannerFile: null,
   });
 
   const [errors, setErrors] = useState({});
@@ -154,6 +164,7 @@ export default function CreateEventPage({ onSuccess }) {
     if (!form.contactEmail.trim()) e.contactEmail = "Email required";
     if (!form.contactPhone.trim()) e.contactPhone = "Phone required";
     if (!form.description.trim()) e.description = "Description required";
+    if (!form.noOfVol) e.noOfVol = "Number of volunteers required";
     return e;
   };
 
@@ -178,6 +189,7 @@ export default function CreateEventPage({ onSuccess }) {
       data.append("endDateTime", formattedDate);
       data.append("requirements", form.requirements || "");
       data.append("benefits", form.benefits || "");
+      data.append("noOfVol", form.noOfVol);
       if (form.bannerFile) data.append("bannerImage", form.bannerFile);
       const token = localStorage.getItem("token");
       await axios.post("http://localhost:8080/api/events/create", data, {
@@ -348,6 +360,22 @@ export default function CreateEventPage({ onSuccess }) {
                   style={inputStyle("date", errors.date, focused)}
                 />
               </Field>
+
+                <Field id="noOfVol" label="Volunteers Required" error={errors.noOfVol} focused={focused}>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 20"
+                    value={form.noOfVol}
+                    onChange={(e) => {
+                      setForm({ ...form, noOfVol: e.target.value });
+                      setErrors({ ...errors, noOfVol: "" });
+                    }}
+                    onFocus={() => setFocused("noOfVol")}
+                    onBlur={() => setFocused(null)}
+                    style={inputStyle("noOfVol", errors.noOfVol, focused)}
+                  />
+                </Field>
 
             </div>
           </div>
