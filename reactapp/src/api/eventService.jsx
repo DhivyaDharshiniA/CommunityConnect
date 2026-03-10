@@ -74,7 +74,7 @@ export const getMyEvents = async () => {
 */
 export const deleteEvent = async (id) => {
   try {
-    const res = await API.delete(`/delete/${id}`);
+    const res = await API.delete(`/${id}`);
     return res.data;
   } catch (err) {
     console.error("Error deleting event:", err);
@@ -116,6 +116,44 @@ export const createEvent = async (event) => {
     return res.data;
   } catch (err) {
     console.error("Error creating event:", err);
+    throw err;
+  }
+};
+
+/*
+  Update event
+*/
+export const updateEvent = async (id, event) => {
+  try {
+    const formData = new FormData();
+
+    formData.append("title", event.title || "");
+    formData.append("description", event.description || "");
+    formData.append("category", event.category || "");
+    formData.append("venue", event.venue || "");
+    formData.append("city", event.city || "");
+    formData.append("state", event.state || "");
+    formData.append("organizerName", event.organizerName || "");
+    formData.append("contactEmail", event.contactEmail || "");
+    formData.append("contactPhone", event.contactPhone || "");
+    formData.append("startDateTime", event.startDateTime || "");
+    formData.append("endDateTime", event.endDateTime || "");
+    formData.append("requirements", event.requirements || "");
+    formData.append("benefits", event.benefits || "");
+
+    if (event.bannerImage) {
+      formData.append("bannerImage", event.bannerImage);
+    }
+
+    const res = await API.put(`/update/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error("Error updating event:", err);
     throw err;
   }
 };

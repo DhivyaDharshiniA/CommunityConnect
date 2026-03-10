@@ -1,8 +1,10 @@
 package com.example.springapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -40,11 +42,11 @@ public class Event {
     // Event information
     private String requirements;
     private String benefits;
-
+    private int noOfVol;
     private String bannerImage;
 
     // Event status
-    private String status; // UPCOMING / ONGOING / COMPLETED
+    private String status;
 
     // QR code path
     private String qrCodePath;
@@ -53,4 +55,8 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "created_by")
     private User createdBy;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<VolunteerRegistration> registrations;
 }

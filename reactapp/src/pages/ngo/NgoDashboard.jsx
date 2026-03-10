@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import ProfilePage from "./ProfilePage";
 import ManageEventsPage from "./ManageEventsPage";
 import CreateEventPage from "./CreateEventPage";
+import MyVolunteers from "./MyVolunteers"
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FONTS
@@ -75,7 +77,6 @@ const Badge = ({ status }) => {
     Approved: "bg-emerald-50 text-emerald-700 border-emerald-200", Rejected: "bg-red-50 text-red-600 border-red-200",
     Verified: "bg-teal-50 text-teal-700 border-teal-200", Inactive: "bg-slate-100 text-slate-500 border-slate-200",
     "Team Lead": "bg-blue-50 text-blue-700 border-blue-200", Coordinator: "bg-violet-50 text-violet-700 border-violet-200",
-    Volunteer: "bg-teal-50 text-teal-700 border-teal-100",
   };
   return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg[status] || cfg.Pending}`}>{status}</span>;
 };
@@ -126,7 +127,7 @@ const navItems = [
   { id: "dashboard", label: "Dashboard", icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
   { id: "create-event", label: "Create Event", icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg> },
   { id: "manage-events", label: "Manage Events", icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> },
-  { id: "requests", label: "Volunteer Requests", badge: true, icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
+  { id: "requests", label: "Volunteers", icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
   { id: "members", label: "Members", icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },
   { id: "reports", label: "Reports", icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
   { id: "profile", label: "Profile", icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> },
@@ -176,7 +177,7 @@ function Sidebar({ activePage, setActivePage, pendingCount, collapsed, setCollap
 function Header({ activePage, setActivePage }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profOpen, setProfOpen] = useState(false);
-  const labels = { dashboard: "Dashboard", "create-event": "Create Event", "manage-events": "Manage Events", requests: "Volunteer Requests", members: "Members", reports: "Reports & Analytics", profile: "Profile", logout: "Sign Out" };
+  const labels = { dashboard: "Dashboard", "create-event": "Create Event", "manage-events": "Manage Events", requests: "Volunteers", members: "Members", reports: "Reports & Analytics", profile: "Profile", logout: "Sign Out" };
   const unread = notifications.filter((n) => n.unread).length;
 
   return (
@@ -332,78 +333,6 @@ function DashboardPage({ setActivePage, requests }) {
 
 // Manage Events
 
-// Requests
-function RequestsPage({ requests, setRequests, onAction }) {
-  const [filter, setFilter] = useState("All");
-  const [search, setSearch] = useState("");
-
-  const handleApprove = (id) => { setRequests((r) => r.map((x) => x.id === id ? { ...x, status: "Approved" } : x)); onAction("Volunteer approved!"); };
-  const handleReject = (id) => { setRequests((r) => r.map((x) => x.id === id ? { ...x, status: "Rejected" } : x)); onAction("Request rejected.", "error"); };
-
-  const pending = requests.filter((r) => r.status === "Pending").length;
-  const filtered = requests.filter((r) => {
-    const mf = filter === "All" || r.status === filter;
-    const ms = r.name.toLowerCase().includes(search.toLowerCase()) || r.event.toLowerCase().includes(search.toLowerCase());
-    return mf && ms;
-  });
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
-        {[{ l: "Total Requests", v: requests.length, c: "slate" }, { l: "Pending", v: pending, c: "amber" }, { l: "Approved", v: requests.filter((r) => r.status === "Approved").length, c: "teal" }].map((s) => (
-          <div key={s.l} className={`bg-white rounded-2xl border ${s.c === "amber" ? "border-amber-100" : s.c === "teal" ? "border-teal-100" : "border-slate-100"} p-4`}>
-            <p className={`text-2xl font-bold ${s.c === "amber" ? "text-amber-600" : s.c === "teal" ? "text-teal-600" : "text-slate-800"}`}>{s.v}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{s.l}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-        <div className="p-3.5 border-b border-slate-50 flex flex-col sm:flex-row gap-2.5 justify-between">
-          <div className="flex flex-wrap gap-1.5">
-            {["All", "Pending", "Approved", "Rejected"].map((f) => (
-              <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filter === f ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
-                {f}{f === "Pending" && pending > 0 && <span className="ml-1 bg-red-500 text-white rounded-full px-1.5 text-[8px] font-bold">{pending}</span>}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-1.5 bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200">
-            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search…" className="bg-transparent text-xs outline-none w-36 text-slate-600 placeholder-slate-400" />
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead><tr className="bg-slate-50 border-b border-slate-100">{["Volunteer", "Applied For", "Skills", "Date", "Status", "Actions"].map((h) => <th key={h} className="text-left px-4 py-3 font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>)}</tr></thead>
-            <tbody className="divide-y divide-slate-50">
-              {filtered.map((r, i) => (
-                <tr key={r.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-2"><Av initials={r.av} idx={i} size="sm" /><div><p className="font-bold text-slate-800">{r.name}</p><p className="text-[10px] text-slate-400">{r.email}</p></div></div>
-                  </td>
-                  <td className="px-4 py-3.5"><p className="font-medium text-slate-700 max-w-[140px] truncate">{r.event}</p></td>
-                  <td className="px-4 py-3.5"><div className="flex flex-wrap gap-1">{r.skills.map((s) => <span key={s} className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100">{s}</span>)}</div></td>
-                  <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{r.date}</td>
-                  <td className="px-4 py-3.5"><Badge status={r.status} /></td>
-                  <td className="px-4 py-3.5">
-                    {r.status === "Pending"
-                      ? <div className="flex gap-1.5">
-                        <button onClick={() => handleApprove(r.id)} className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1.5 rounded-lg transition-colors"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>Approve</button>
-                        <button onClick={() => handleReject(r.id)} className="flex items-center gap-1 text-red-600 bg-red-50 hover:bg-red-100 font-bold px-2.5 py-1.5 rounded-lg border border-red-100 transition-colors"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>Reject</button>
-                      </div>
-                      : <span className="text-slate-400 italic">—</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filtered.length === 0 && <p className="text-center py-10 text-sm text-slate-400">No requests found.</p>}
-      </div>
-    </div>
-  );
-}
-
 // Members
 function MembersPage() {
   const [search, setSearch] = useState("");
@@ -557,7 +486,7 @@ export default function App() {
     dashboard: <DashboardPage setActivePage={setActivePage} requests={requests} />,
     "create-event": <CreateEventPage onSuccess={() => { showToast("Event created successfully!"); setActivePage("manage-events"); }} />,
     "manage-events": <ManageEventsPage setActivePage={setActivePage} />,
-    requests: <RequestsPage requests={requests} setRequests={setRequests} onAction={showToast} />,
+    requests: <MyVolunteers />,
     members: <MembersPage />,
     reports: <ReportsPage onAction={showToast} />,
     profile: <ProfilePage onAction={showToast} />,
