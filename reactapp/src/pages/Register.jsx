@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import API from "../api";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -16,11 +16,6 @@ const MailIcon = () => (
 const LockIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="5" y="11" width="14" height="11" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
-  </svg>
-);
-const ShieldIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2L3 7v5c0 5 4 9 9 10 5-1 9-5 9-10V7L12 2z"/>
   </svg>
 );
 const UploadIcon = () => (
@@ -104,18 +99,46 @@ const OtpInput = ({ value, onChange }) => {
 
 // ── Main Component ──
 function Register() {
-  const [step, setStep] = useState(1); // 1=Info, 2=Verify OTP, 3=Done
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "ROLE_USER" });
   const [proofFile, setProofFile] = useState(null);
   const [proofDrag, setProofDrag] = useState(false);
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(0);
   const fileRef = useRef();
   const navigate = useNavigate();
+
+  // ── Auto-login silently after registration ──
+  useEffect(() => {
+    if (step !== 3) return;
+
+    const autoLogin = async () => {
+      try {
+        const res = await API.post("/login", {
+          email: formData.email,
+          password: formData.password,
+        });
+
+        // Adjust to match your API response shape
+        const token = res.data?.token || res.data?.accessToken;
+        const user  = res.data?.user  || res.data;
+
+        if (token) localStorage.setItem("token", token);
+        if (user)  localStorage.setItem("user", JSON.stringify(user));
+
+        // Show success screen for 2.5 seconds, then go to dashboard
+        setTimeout(() => navigate("/login"), 2500);
+      } catch {
+        // If auto-login fails, fall back to login page after 3 seconds
+        setTimeout(() => navigate("/login"), 3000);
+      }
+    };
+
+    autoLogin();
+  }, [step]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -130,21 +153,16 @@ function Register() {
     }
   };
 
-  // Step 1 → Send OTP
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError("");
-
     if (formData.role === "ROLE_NGO" && !proofFile) {
       setError("Please upload NGO proof document.");
       return;
     }
-
     setIsSending(true);
     try {
-      // Call your backend to send OTP to email
       await API.post("/send-otp", { email: formData.email });
-      setOtpSent(true);
       setStep(2);
       startCountdown();
     } catch (err) {
@@ -155,7 +173,6 @@ function Register() {
     }
   };
 
-  // Countdown for resend
   const startCountdown = () => {
     setCountdown(60);
     const interval = setInterval(() => {
@@ -181,37 +198,33 @@ function Register() {
     }
   };
 
-  // Step 2 → Verify OTP + Register
   const handleVerifyAndRegister = async (e) => {
     e.preventDefault();
     if (otp.length !== 6) { setError("Please enter the complete 6-digit OTP."); return; }
     setError("");
     setIsLoading(true);
-
     try {
-      // Verify OTP first
       await API.post("/verify-otp", { email: formData.email, otp });
 
-      // Then register
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name);
       formDataToSend.append("email", formData.email);
       formDataToSend.append("password", formData.password);
       formDataToSend.append("role", formData.role);
       if (formData.role === "ROLE_NGO") {
-        formDataToSend.append("organizationName", formData.organizationName);
-        formDataToSend.append("registrationNumber", formData.registrationNumber);
-        formDataToSend.append("category", formData.category);
-        formDataToSend.append("phone", formData.phone);
-        formDataToSend.append("website", formData.website);
-        formDataToSend.append("city", formData.city);
-        formDataToSend.append("state", formData.state);
-        formDataToSend.append("description", formData.description);
+        formDataToSend.append("organizationName", formData.organizationName || "");
+        formDataToSend.append("registrationNumber", formData.registrationNumber || "");
+        formDataToSend.append("category", formData.category || "");
+        formDataToSend.append("phone", formData.phone || "");
+        formDataToSend.append("website", formData.website || "");
+        formDataToSend.append("city", formData.city || "");
+        formDataToSend.append("state", formData.state || "");
+        formDataToSend.append("description", formData.description || "");
         formDataToSend.append("proof", proofFile);
       }
 
       await API.post("/register", formDataToSend);
-      setStep(3);
+      setStep(3); // triggers auto-login useEffect
     } catch (err) {
       const msg = err.response?.data || "Invalid OTP. Please try again.";
       setError(typeof msg === "string" ? msg : "Invalid OTP.");
@@ -231,8 +244,6 @@ function Register() {
           className="absolute inset-0 w-full h-full object-cover opacity-45 scale-100 hover:scale-105 transition-transform duration-[8000ms]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-900/40 to-transparent" />
-
-        {/* Badge */}
         <div className="absolute top-8 left-8 z-10">
           <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-amber-400 bg-amber-400/10 border border-amber-400/25 px-3 py-1.5 rounded-full backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -240,8 +251,6 @@ function Register() {
           </span>
         </div>
         <div className="absolute top-8 right-8 w-10 h-10 border-t-2 border-r-2 border-amber-400/50 rounded-tr-md" />
-
-        {/* Hero text */}
         <div className="absolute bottom-0 left-0 right-0 p-10 z-10">
           <h1 className="text-5xl font-serif font-semibold text-white leading-[1.15] mb-3">
             Start your <span className="italic text-amber-400">journey</span>
@@ -250,8 +259,6 @@ function Register() {
           <p className="text-stone-300 text-[15px] leading-relaxed max-w-[28ch]">
             Create an account and become part of a thriving, supportive community.
           </p>
-
-          {/* Feature pills */}
           <div className="flex flex-col gap-3 mt-8 pt-8 border-t border-white/10">
             {[
               ["🔒", "Secure & private by design"],
@@ -269,13 +276,11 @@ function Register() {
 
       {/* ── RIGHT FORM PANEL ── */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative overflow-hidden">
-        {/* Blobs */}
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-orange-100 rounded-full opacity-60 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-16 w-64 h-64 bg-amber-50 rounded-full opacity-80 blur-3xl pointer-events-none" />
 
         <div className="w-full max-w-[440px] relative z-10">
 
-          {/* Step tracker */}
           {step < 3 && (
             <div className="flex items-center justify-center gap-4 mb-8">
               <StepDot step={1} current={step} label="Details" />
@@ -286,13 +291,11 @@ function Register() {
             </div>
           )}
 
-          {/* ════ STEP 1 — Registration Form ════ */}
+          {/* ════ STEP 1 ════ */}
           {step === 1 && (
             <>
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-orange-500 mb-1">Get started</p>
-              <h2 className="text-[2.4rem] font-serif font-semibold text-stone-800 leading-none mb-2">
-                Create account
-              </h2>
+              <h2 className="text-[2.4rem] font-serif font-semibold text-stone-800 leading-none mb-2">Create account</h2>
               <p className="text-stone-400 text-sm mb-7 leading-relaxed">
                 Fill in your details. We'll verify your email before registering.
               </p>
@@ -304,8 +307,6 @@ function Register() {
               )}
 
               <form onSubmit={handleSendOtp} className="space-y-4">
-
-                {/* Full Name */}
                 <div className="space-y-1.5">
                   <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-stone-600">Full Name</label>
                   <div className="relative">
@@ -315,7 +316,6 @@ function Register() {
                   </div>
                 </div>
 
-                {/* Email */}
                 <div className="space-y-1.5">
                   <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-stone-600">Email Address</label>
                   <div className="relative">
@@ -325,7 +325,6 @@ function Register() {
                   </div>
                 </div>
 
-                {/* Password */}
                 <div className="space-y-1.5">
                   <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-stone-600">Password</label>
                   <div className="relative">
@@ -335,7 +334,6 @@ function Register() {
                   </div>
                 </div>
 
-                {/* Role */}
                 <div className="space-y-1.5">
                   <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-stone-600">Account Type</label>
                   <div className="grid grid-cols-2 gap-3">
@@ -351,106 +349,61 @@ function Register() {
                   </div>
                 </div>
 
-                {/* NGO Proof Upload */}
                 {formData.role === "ROLE_NGO" && (
-                  <div className="space-y-1.5">
-                     <input
-                          name="organizationName"
-                          placeholder="Organization Name"
-                          onChange={handleChange}
-                          className="input"
-                        />
-
-                        <input
-                          name="registrationNumber"
-                          placeholder="Registration Number"
-                          onChange={handleChange}
-                          className="input"
-                        />
-
-                        <input
-                          name="category"
-                          placeholder="Category (Environment / Health / Education)"
-                          onChange={handleChange}
-                          className="input"
-                        />
-
-                        <input
-                          name="phone"
-                          placeholder="Phone"
-                          onChange={handleChange}
-                          className="input"
-                        />
-
-                        <input
-                          name="website"
-                          placeholder="Website"
-                          onChange={handleChange}
-                          className="input"
-                        />
-
-                        <input
-                          name="city"
-                          placeholder="City"
-                          onChange={handleChange}
-                          className="input"
-                        />
-
-                        <input
-                          name="state"
-                          placeholder="State"
-                          onChange={handleChange}
-                          className="input"
-                        />
-
-                        <textarea
-                          name="description"
-                          placeholder="Describe your NGO"
-                          onChange={handleChange}
-                          className="input"
-                        />
-                    <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-stone-600">
-                      NGO Proof Document <span className="text-red-400">*</span>
-                    </label>
-                    <div
-                      onClick={() => fileRef.current?.click()}
-                      onDragOver={e => { e.preventDefault(); setProofDrag(true); }}
-                      onDragLeave={() => setProofDrag(false)}
-                      onDrop={e => { e.preventDefault(); setProofDrag(false); handleFile(e.dataTransfer.files[0]); }}
-                      className={`relative flex flex-col items-center justify-center gap-2 py-6 px-4 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200
-                        ${proofDrag ? "border-orange-400 bg-orange-50" : proofFile ? "border-green-400 bg-green-50" : "border-stone-200 bg-stone-50 hover:border-orange-300 hover:bg-orange-50/50"}`}>
-                      <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={e => handleFile(e.target.files[0])} />
-                      {proofFile ? (
-                        <>
-                          <span className="text-2xl">✅</span>
-                          <p className="text-sm font-semibold text-green-700 text-center truncate max-w-[200px]">{proofFile.name}</p>
-                          <p className="text-xs text-green-500">Click to change file</p>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-stone-400"><UploadIcon /></span>
-                          <p className="text-sm font-medium text-stone-600">Drop file or <span className="text-orange-500 font-semibold">browse</span></p>
-                          <p className="text-xs text-stone-400">PDF, JPG, PNG accepted</p>
-                        </>
-                      )}
+                  <div className="space-y-3">
+                    {[
+                      { name: "organizationName", placeholder: "Organization Name" },
+                      { name: "registrationNumber", placeholder: "Registration Number" },
+                      { name: "category", placeholder: "Category (Environment / Health / Education)" },
+                      { name: "phone", placeholder: "Phone" },
+                      { name: "website", placeholder: "Website" },
+                      { name: "city", placeholder: "City" },
+                      { name: "state", placeholder: "State" },
+                    ].map(({ name, placeholder }) => (
+                      <input key={name} name={name} placeholder={placeholder} onChange={handleChange}
+                        className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm placeholder-stone-300 focus:outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100/70 focus:bg-white hover:border-stone-300 hover:bg-white transition-all duration-200" />
+                    ))}
+                    <textarea name="description" placeholder="Describe your NGO" rows={3} onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm placeholder-stone-300 focus:outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100/70 focus:bg-white hover:border-stone-300 hover:bg-white transition-all duration-200 resize-none" />
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-stone-600">
+                        NGO Proof Document <span className="text-red-400">*</span>
+                      </label>
+                      <div
+                        onClick={() => fileRef.current?.click()}
+                        onDragOver={e => { e.preventDefault(); setProofDrag(true); }}
+                        onDragLeave={() => setProofDrag(false)}
+                        onDrop={e => { e.preventDefault(); setProofDrag(false); handleFile(e.dataTransfer.files[0]); }}
+                        className={`relative flex flex-col items-center justify-center gap-2 py-6 px-4 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200
+                          ${proofDrag ? "border-orange-400 bg-orange-50" : proofFile ? "border-green-400 bg-green-50" : "border-stone-200 bg-stone-50 hover:border-orange-300 hover:bg-orange-50/50"}`}>
+                        <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={e => handleFile(e.target.files[0])} />
+                        {proofFile ? (
+                          <>
+                            <span className="text-2xl">✅</span>
+                            <p className="text-sm font-semibold text-green-700 text-center truncate max-w-[200px]">{proofFile.name}</p>
+                            <p className="text-xs text-green-500">Click to change file</p>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-stone-400"><UploadIcon /></span>
+                            <p className="text-sm font-medium text-stone-600">Drop file or <span className="text-orange-500 font-semibold">browse</span></p>
+                            <p className="text-xs text-stone-400">PDF, JPG, PNG accepted</p>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Submit */}
                 <button type="submit" disabled={isSending}
                   className="relative w-full py-3.5 rounded-xl font-semibold text-white text-sm tracking-wide overflow-hidden group
-                    bg-gradient-to-r from-orange-500 to-red-500
-                    shadow-lg shadow-orange-200 hover:shadow-xl hover:shadow-orange-300 hover:-translate-y-0.5
-                    active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0
-                    transition-all duration-200">
+                    bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-200 hover:shadow-xl hover:shadow-orange-300
+                    hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all duration-200">
                   <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {isSending ? (
                       <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> Sending OTP...</>
-                    ) : (
-                      <><span>✉️</span> Send Verification Code</>
-                    )}
+                    ) : <><span>✉️</span> Send Verification Code</>}
                   </span>
                 </button>
               </form>
@@ -464,27 +417,21 @@ function Register() {
             </>
           )}
 
-          {/* ════ STEP 2 — OTP Verification ════ */}
+          {/* ════ STEP 2 ════ */}
           {step === 2 && (
             <>
               <button onClick={() => { setStep(1); setOtp(""); setError(""); }}
                 className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-700 transition-colors mb-6">
                 <ArrowLeft /> Back
               </button>
-
               <div className="flex justify-center mb-5">
                 <div className="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center">
                   <span className="text-3xl">📬</span>
                 </div>
               </div>
-
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-orange-500 mb-1 text-center">Check your inbox</p>
-              <h2 className="text-[2rem] font-serif font-semibold text-stone-800 leading-none mb-2 text-center">
-                Verify your email
-              </h2>
-              <p className="text-stone-400 text-sm mb-1 text-center leading-relaxed">
-                We sent a 6-digit code to
-              </p>
+              <h2 className="text-[2rem] font-serif font-semibold text-stone-800 leading-none mb-2 text-center">Verify your email</h2>
+              <p className="text-stone-400 text-sm mb-1 text-center">We sent a 6-digit code to</p>
               <p className="text-orange-500 font-semibold text-sm text-center mb-7">{formData.email}</p>
 
               {error && (
@@ -495,13 +442,10 @@ function Register() {
 
               <form onSubmit={handleVerifyAndRegister} className="space-y-6">
                 <OtpInput value={otp} onChange={setOtp} />
-
                 <button type="submit" disabled={isLoading || otp.length !== 6}
                   className="relative w-full py-3.5 rounded-xl font-semibold text-white text-sm tracking-wide overflow-hidden group
-                    bg-gradient-to-r from-orange-500 to-red-500
-                    shadow-lg shadow-orange-200 hover:shadow-xl hover:shadow-orange-300 hover:-translate-y-0.5
-                    active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0
-                    transition-all duration-200">
+                    bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-200 hover:shadow-xl hover:shadow-orange-300
+                    hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all duration-200">
                   <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {isLoading ? (
@@ -511,7 +455,6 @@ function Register() {
                 </button>
               </form>
 
-              {/* Resend */}
               <div className="text-center mt-6">
                 <p className="text-stone-400 text-sm">
                   Didn't receive it?{" "}
@@ -528,45 +471,48 @@ function Register() {
             </>
           )}
 
-          {/* ════ STEP 3 — Success ════ */}
+          {/* ════ STEP 3 — Success only (auto-login happens in background) ════ */}
           {step === 3 && (
-            <div className="text-center">
+            <div className="text-center py-6">
               {/* Animated checkmark */}
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center mb-8">
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center animate-bounce">
-                    <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <div className="w-28 h-28 rounded-full bg-green-100 flex items-center justify-center">
+                    <div className="w-18 h-18 w-[4.5rem] h-[4.5rem] rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-200">
+                      <svg className="w-9 h-9 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"/>
                       </svg>
                     </div>
                   </div>
-                  <div className="absolute inset-0 rounded-full bg-green-200 animate-ping opacity-30" />
+                  <div className="absolute inset-0 rounded-full bg-green-200 animate-ping opacity-20" />
                 </div>
               </div>
 
-              <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-green-500 mb-1">You're in!</p>
-              <h2 className="text-[2.2rem] font-serif font-semibold text-stone-800 leading-none mb-3">
-                Account Created! 🎉
+              <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-green-500 mb-2">All done!</p>
+              <h2 className="text-[2.4rem] font-serif font-semibold text-stone-800 leading-none mb-4">
+                You have registered<br />
+                <span className="text-green-500">successfully</span> 🎉
               </h2>
-              <p className="text-stone-400 text-sm leading-relaxed mb-8 max-w-[28ch] mx-auto">
-                Welcome to Community Connect,{" "}
-                <span className="text-stone-600 font-semibold">{formData.name}</span>. Your account is ready.
-                {formData.role === "ROLE_NGO" && (
-                  <span className="block mt-2 text-amber-600">
-                    Your NGO proof is under review. You'll hear from us soon.
-                  </span>
-                )}
+              <p className="text-stone-400 text-sm leading-relaxed max-w-[26ch] mx-auto mb-2">
+                Welcome,{" "}
+                <span className="text-stone-700 font-semibold">{formData.name}</span>!
+                Your account is all set up.
               </p>
 
-              <button onClick={() => navigate("/login")}
-                className="relative inline-flex px-8 py-3.5 rounded-xl font-semibold text-white text-sm tracking-wide overflow-hidden group
-                  bg-gradient-to-r from-orange-500 to-red-500
-                  shadow-lg shadow-orange-200 hover:shadow-xl hover:shadow-orange-300 hover:-translate-y-0.5
-                  active:translate-y-0 transition-all duration-200">
-                <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-                <span className="relative z-10">Go to Login →</span>
-              </button>
+              {formData.role === "ROLE_NGO" && (
+                <p className="text-amber-600 text-sm mt-2 max-w-[30ch] mx-auto">
+                  📋 Your NGO proof is under review. We'll notify you soon.
+                </p>
+              )}
+
+              {/* Auto-login status */}
+              <div className="mt-8 inline-flex items-center gap-2.5 bg-stone-100 text-stone-500 text-xs font-medium px-4 py-2.5 rounded-full">
+                <svg className="animate-spin w-3.5 h-3.5 text-orange-400" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                </svg>
+                Logging you in…
+              </div>
             </div>
           )}
 

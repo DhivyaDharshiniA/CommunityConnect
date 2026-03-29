@@ -114,5 +114,7 @@ public class NGOProfileService {
 
         return ngoRepository.save(ngo);
     }
-
+    public List<NGOProfile> getAllNGOs() {
+        return ngoRepository.findAll();
+    }
 }

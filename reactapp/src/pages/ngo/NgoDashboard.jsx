@@ -3,7 +3,8 @@ import ProfilePage from "./ProfilePage";
 import ManageEventsPage from "./ManageEventsPage";
 import CreateEventPage from "./CreateEventPage";
 import MyVolunteers from "./MyVolunteers"
-
+import MembersPage from "./MembersPage";
+import ReportsPage from "./ReportsPage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FONTS
@@ -40,16 +41,16 @@ const initRequests = [
   { id: 7, name: "Preethi Srinivasan", email: "preethi.s@email.com", event: "Youth Leadership Summit", date: "Mar 6", skills: ["Public Speaking", "Events"], status: "Rejected", av: "PS" },
 ];
 
-const mockMembers = [
-  { id: 1, name: "Arjun Krishnamurthy", email: "arjun.k@email.com", role: "Team Lead", events: 14, joined: "Jan 2024", status: "Active", av: "AK" },
-  { id: 2, name: "Meenakshi Iyer", email: "meenakshi.i@email.com", role: "Coordinator", events: 9, joined: "Mar 2024", status: "Active", av: "MI" },
-  { id: 3, name: "Vijay Anand", email: "vijay.a@email.com", role: "Volunteer", events: 7, joined: "Jun 2024", status: "Active", av: "VA" },
-  { id: 4, name: "Divya Chandrasekaran", email: "divya.c@email.com", role: "Team Lead", events: 19, joined: "Nov 2023", status: "Active", av: "DC" },
-  { id: 5, name: "Balaji Natarajan", email: "balaji.n@email.com", role: "Volunteer", events: 5, joined: "Aug 2024", status: "Inactive", av: "BN" },
-  { id: 6, name: "Kavitha Rajan", email: "kavitha.r@email.com", role: "Coordinator", events: 11, joined: "Feb 2024", status: "Active", av: "KR" },
-  { id: 7, name: "Senthil Kumar", email: "senthil.k@email.com", role: "Volunteer", events: 3, joined: "Oct 2024", status: "Active", av: "SK" },
-  { id: 8, name: "Lakshmi Narayanan", email: "lakshmi.n@email.com", role: "Team Lead", events: 16, joined: "Dec 2023", status: "Active", av: "LN" },
-];
+// const mockMembers = [
+//   { id: 1, name: "Arjun Krishnamurthy", email: "arjun.k@email.com", role: "Team Lead", events: 14, joined: "Jan 2024", status: "Active", av: "AK" },
+//   { id: 2, name: "Meenakshi Iyer", email: "meenakshi.i@email.com", role: "Coordinator", events: 9, joined: "Mar 2024", status: "Active", av: "MI" },
+//   { id: 3, name: "Vijay Anand", email: "vijay.a@email.com", role: "Volunteer", events: 7, joined: "Jun 2024", status: "Active", av: "VA" },
+//   { id: 4, name: "Divya Chandrasekaran", email: "divya.c@email.com", role: "Team Lead", events: 19, joined: "Nov 2023", status: "Active", av: "DC" },
+//   { id: 5, name: "Balaji Natarajan", email: "balaji.n@email.com", role: "Volunteer", events: 5, joined: "Aug 2024", status: "Inactive", av: "BN" },
+//   { id: 6, name: "Kavitha Rajan", email: "kavitha.r@email.com", role: "Coordinator", events: 11, joined: "Feb 2024", status: "Active", av: "KR" },
+//   { id: 7, name: "Senthil Kumar", email: "senthil.k@email.com", role: "Volunteer", events: 3, joined: "Oct 2024", status: "Active", av: "SK" },
+//   { id: 8, name: "Lakshmi Narayanan", email: "lakshmi.n@email.com", role: "Team Lead", events: 16, joined: "Dec 2023", status: "Active", av: "LN" },
+// ];
 
 const chartData = [
   { month: "Oct", events: 3, volunteers: 42 }, { month: "Nov", events: 5, volunteers: 68 },
@@ -334,132 +335,132 @@ function DashboardPage({ setActivePage, requests }) {
 // Manage Events
 
 // Members
-function MembersPage() {
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("All");
-  const filtered = mockMembers.filter((m) => {
-    const ms = m.name.toLowerCase().includes(search.toLowerCase());
-    const mr = roleFilter === "All" || m.role === roleFilter;
-    return ms && mr;
-  });
+{/* function MembersPage() { */}
+{/*   const [search, setSearch] = useState(""); */}
+{/*   const [roleFilter, setRoleFilter] = useState("All"); */}
+{/*   const filtered = mockMembers.filter((m) => { */}
+{/*     const ms = m.name.toLowerCase().includes(search.toLowerCase()); */}
+{/*     const mr = roleFilter === "All" || m.role === roleFilter; */}
+{/*     return ms && mr; */}
+{/*   }); */}
 
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[{ l: "Total Members", v: mockMembers.length }, { l: "Active", v: mockMembers.filter((m) => m.status === "Active").length }, { l: "Team Leads", v: mockMembers.filter((m) => m.role === "Team Lead").length }, { l: "Avg Events", v: (mockMembers.reduce((a, m) => a + m.events, 0) / mockMembers.length).toFixed(1) }].map((s) => (
-          <div key={s.l} className="bg-white rounded-2xl border border-slate-100 p-4"><p className="text-2xl font-bold text-slate-800">{s.v}</p><p className="text-xs text-slate-500 mt-0.5">{s.l}</p></div>
-        ))}
-      </div>
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-        <div className="p-3.5 border-b border-slate-50 flex flex-col sm:flex-row gap-2.5 justify-between">
-          <div className="flex flex-wrap gap-1.5">
-            {["All", "Team Lead", "Coordinator", "Volunteer"].map((r) => (
-              <button key={r} onClick={() => setRoleFilter(r)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${roleFilter === r ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{r}</button>
-            ))}
-          </div>
-          <div className="flex items-center gap-1.5 bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200">
-            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search…" className="bg-transparent text-xs outline-none w-32 text-slate-600 placeholder-slate-400" />
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead><tr className="bg-slate-50 border-b border-slate-100">{["Member", "Role", "Events", "Joined", "Status", "Actions"].map((h) => <th key={h} className="text-left px-4 py-3 font-bold text-slate-500 uppercase tracking-wider">{h}</th>)}</tr></thead>
-            <tbody className="divide-y divide-slate-50">
-              {filtered.map((m, i) => (
-                <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-4 py-3.5"><div className="flex items-center gap-2.5"><Av initials={m.av} idx={i} /><div><p className="font-bold text-slate-800">{m.name}</p><p className="text-[10px] text-slate-400">{m.email}</p></div></div></td>
-                  <td className="px-4 py-3.5"><Badge status={m.role} /></td>
-                  <td className="px-4 py-3.5"><div className="flex items-center gap-2"><div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-teal-500 rounded-full" style={{ width: `${(m.events / 20) * 100}%` }} /></div><span className="font-bold text-slate-700">{m.events}</span></div></td>
-                  <td className="px-4 py-3.5 text-slate-500">{m.joined}</td>
-                  <td className="px-4 py-3.5"><Badge status={m.status} /></td>
-                  <td className="px-4 py-3.5"><div className="flex gap-2"><button className="text-teal-600 font-bold hover:underline">View</button><button className="text-slate-500 font-bold hover:underline">Message</button></div></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filtered.length === 0 && <p className="text-center py-10 text-sm text-slate-400">No members found.</p>}
-      </div>
-    </div>
-  );
-}
+{/*   return ( */}
+{/*     <div className="space-y-4"> */}
+{/*       <div className="grid grid-cols-2 md:grid-cols-4 gap-3"> */}
+{/*         {[{ l: "Total Members", v: mockMembers.length }, { l: "Active", v: mockMembers.filter((m) => m.status === "Active").length }, { l: "Team Leads", v: mockMembers.filter((m) => m.role === "Team Lead").length }, { l: "Avg Events", v: (mockMembers.reduce((a, m) => a + m.events, 0) / mockMembers.length).toFixed(1) }].map((s) => ( */}
+{/*           <div key={s.l} className="bg-white rounded-2xl border border-slate-100 p-4"><p className="text-2xl font-bold text-slate-800">{s.v}</p><p className="text-xs text-slate-500 mt-0.5">{s.l}</p></div> */}
+{/*         ))} */}
+{/*       </div> */}
+{/*       <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden"> */}
+{/*         <div className="p-3.5 border-b border-slate-50 flex flex-col sm:flex-row gap-2.5 justify-between"> */}
+{/*           <div className="flex flex-wrap gap-1.5"> */}
+{/*             {["All", "Team Lead", "Coordinator", "Volunteer"].map((r) => ( */}
+{/*               <button key={r} onClick={() => setRoleFilter(r)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${roleFilter === r ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{r}</button> */}
+{/*             ))} */}
+{/*           </div> */}
+{/*           <div className="flex items-center gap-1.5 bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200"> */}
+{/*             <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg> */}
+{/*             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search…" className="bg-transparent text-xs outline-none w-32 text-slate-600 placeholder-slate-400" /> */}
+{/*           </div> */}
+{/*         </div> */}
+{/*         <div className="overflow-x-auto"> */}
+{/*           <table className="w-full text-xs"> */}
+{/*             <thead><tr className="bg-slate-50 border-b border-slate-100">{["Member", "Role", "Events", "Joined", "Status", "Actions"].map((h) => <th key={h} className="text-left px-4 py-3 font-bold text-slate-500 uppercase tracking-wider">{h}</th>)}</tr></thead> */}
+{/*             <tbody className="divide-y divide-slate-50"> */}
+{/*               {filtered.map((m, i) => ( */}
+{/*                 <tr key={m.id} className="hover:bg-slate-50/60 transition-colors"> */}
+{/*                   <td className="px-4 py-3.5"><div className="flex items-center gap-2.5"><Av initials={m.av} idx={i} /><div><p className="font-bold text-slate-800">{m.name}</p><p className="text-[10px] text-slate-400">{m.email}</p></div></div></td> */}
+{/*                   <td className="px-4 py-3.5"><Badge status={m.role} /></td> */}
+{/*                   <td className="px-4 py-3.5"><div className="flex items-center gap-2"><div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-teal-500 rounded-full" style={{ width: `${(m.events / 20) * 100}%` }} /></div><span className="font-bold text-slate-700">{m.events}</span></div></td> */}
+{/*                   <td className="px-4 py-3.5 text-slate-500">{m.joined}</td> */}
+{/*                   <td className="px-4 py-3.5"><Badge status={m.status} /></td> */}
+{/*                   <td className="px-4 py-3.5"><div className="flex gap-2"><button className="text-teal-600 font-bold hover:underline">View</button><button className="text-slate-500 font-bold hover:underline">Message</button></div></td> */}
+{/*                 </tr> */}
+{/*               ))} */}
+{/*             </tbody> */}
+{/*           </table> */}
+{/*         </div> */}
+{/*         {filtered.length === 0 && <p className="text-center py-10 text-sm text-slate-400">No members found.</p>} */}
+{/*       </div> */}
+{/*     </div> */}
+{/*   ); */}
+{/* } */}
 
 // Reports
-function ReportsPage({ onAction }) {
-  const maxV = Math.max(...chartData.map((d) => d.volunteers));
-  const cats = [{ c: "Environment", n: 2, col: "#14b8a6" }, { c: "Health", n: 2, col: "#ef4444" }, { c: "Education", n: 2, col: "#3b82f6" }];
+{/* function ReportsPage({ onAction, members = [] }) { */}
+{/*   const maxV = Math.max(...chartData.map((d) => d.volunteers)); */}
+{/*   const cats = [{ c: "Environment", n: 2, col: "#14b8a6" }, { c: "Health", n: 2, col: "#ef4444" }, { c: "Education", n: 2, col: "#3b82f6" }]; */}
 
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[{ l: "Avg Volunteers/Event", v: "7.8" }, { l: "Approval Rate", v: "71%" }, { l: "Active Members", v: "7" }, { l: "Trust Score", v: "94/100" }].map((k) => (
-          <div key={k.l} className="bg-white rounded-2xl border border-slate-100 p-4"><p className="text-2xl font-bold text-slate-800">{k.v}</p><p className="text-xs text-slate-500 mt-0.5">{k.l}</p></div>
-        ))}
-      </div>
+{/*   return ( */}
+{/*     <div className="space-y-4"> */}
+{/*       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"> */}
+{/*         {[{ l: "Avg Volunteers/Event", v: "7.8" }, { l: "Approval Rate", v: "71%" }, { l: "Active Members", v: "7" }, { l: "Trust Score", v: "94/100" }].map((k) => ( */}
+{/*           <div key={k.l} className="bg-white rounded-2xl border border-slate-100 p-4"><p className="text-2xl font-bold text-slate-800">{k.v}</p><p className="text-xs text-slate-500 mt-0.5">{k.l}</p></div> */}
+{/*         ))} */}
+{/*       </div> */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div><h3 className="text-sm font-bold text-slate-800">Volunteer Participation Trend</h3><p className="text-xs text-slate-400">Monthly — last 6 months</p></div>
-            <button onClick={() => onAction("Report exported!")} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors">
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg> Export
-            </button>
-          </div>
-          <div className="space-y-2.5">
-            {chartData.map((d, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-xs font-bold text-slate-600 w-6 flex-shrink-0">{d.month}</span>
-                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${(d.volunteers / maxV) * 100}%` }} /></div>
-                <span className="text-xs font-bold text-slate-700 w-6 text-right">{d.volunteers}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl border border-slate-100 p-5">
-          <h3 className="text-sm font-bold text-slate-800 mb-4">Event Categories</h3>
-          <div className="space-y-3">
-            {cats.map((c) => (
-              <div key={c.c}>
-                <div className="flex justify-between mb-1"><span className="text-xs font-medium text-slate-600">{c.c}</span><span className="text-xs font-bold text-slate-700">{c.n} events</span></div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(c.n / 6) * 100}%`, backgroundColor: c.col }} /></div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 pt-4 border-t border-slate-100">
-            <h4 className="text-xs font-bold text-slate-700 mb-3">Event Performance</h4>
-            <div className="space-y-2.5">
-              {mockEvents.slice(0, 4).map((e) => {
-                const p = Math.round((e.volunteers / e.capacity) * 100);
-                return (
-                  <div key={e.id} className="flex items-center gap-2">
-                    <p className="text-[10px] text-slate-600 font-medium w-24 truncate flex-shrink-0">{e.title}</p>
-                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${p >= 80 ? "bg-emerald-500" : p >= 50 ? "bg-amber-400" : "bg-blue-400"}`} style={{ width: `${p}%` }} /></div>
-                    <span className="text-[10px] font-bold text-slate-600 w-8 text-right">{p}%</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
+{/*       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4"> */}
+{/*         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-5"> */}
+{/*           <div className="flex items-center justify-between mb-3"> */}
+{/*             <div><h3 className="text-sm font-bold text-slate-800">Volunteer Participation Trend</h3><p className="text-xs text-slate-400">Monthly — last 6 months</p></div> */}
+{/*             <button onClick={() => onAction("Report exported!")} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"> */}
+{/*               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg> Export */}
+{/*             </button> */}
+{/*           </div> */}
+{/*           <div className="space-y-2.5"> */}
+{/*             {chartData.map((d, i) => ( */}
+{/*               <div key={i} className="flex items-center gap-3"> */}
+{/*                 <span className="text-xs font-bold text-slate-600 w-6 flex-shrink-0">{d.month}</span> */}
+{/*                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${(d.volunteers / maxV) * 100}%` }} /></div> */}
+{/*                 <span className="text-xs font-bold text-slate-700 w-6 text-right">{d.volunteers}</span> */}
+{/*               </div> */}
+{/*             ))} */}
+{/*           </div> */}
+{/*         </div> */}
+{/*         <div className="bg-white rounded-2xl border border-slate-100 p-5"> */}
+{/*           <h3 className="text-sm font-bold text-slate-800 mb-4">Event Categories</h3> */}
+{/*           <div className="space-y-3"> */}
+{/*             {cats.map((c) => ( */}
+{/*               <div key={c.c}> */}
+{/*                 <div className="flex justify-between mb-1"><span className="text-xs font-medium text-slate-600">{c.c}</span><span className="text-xs font-bold text-slate-700">{c.n} events</span></div> */}
+{/*                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(c.n / 6) * 100}%`, backgroundColor: c.col }} /></div> */}
+{/*               </div> */}
+{/*             ))} */}
+{/*           </div> */}
+{/*           <div className="mt-5 pt-4 border-t border-slate-100"> */}
+{/*             <h4 className="text-xs font-bold text-slate-700 mb-3">Event Performance</h4> */}
+{/*             <div className="space-y-2.5"> */}
+{/*               {mockEvents.slice(0, 4).map((e) => { */}
+{/*                 const p = Math.round((e.volunteers / e.capacity) * 100); */}
+{/*                 return ( */}
+{/*                   <div key={e.id} className="flex items-center gap-2"> */}
+{/*                     <p className="text-[10px] text-slate-600 font-medium w-24 truncate flex-shrink-0">{e.title}</p> */}
+{/*                     <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${p >= 80 ? "bg-emerald-500" : p >= 50 ? "bg-amber-400" : "bg-blue-400"}`} style={{ width: `${p}%` }} /></div> */}
+{/*                     <span className="text-[10px] font-bold text-slate-600 w-8 text-right">{p}%</span> */}
+{/*                   </div> */}
+{/*                 ); */}
+{/*               })} */}
+{/*             </div> */}
+{/*           </div> */}
+{/*         </div> */}
+{/*       </div> */}
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-5">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">Top Active Members</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[...mockMembers].sort((a, b) => b.events - a.events).slice(0, 6).map((m, i) => (
-            <div key={m.id} className="flex items-center gap-3">
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${i === 0 ? "bg-amber-400 text-white" : "bg-slate-100 text-slate-500"}`}>{i + 1}</span>
-              <Av initials={m.av} idx={i} size="sm" />
-              <div className="flex-1 min-w-0"><p className="text-xs font-bold text-slate-700 truncate">{m.name}</p><p className="text-[10px] text-slate-400">{m.role}</p></div>
-              <div className="w-20 flex items-center gap-1.5"><div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-teal-500 rounded-full" style={{ width: `${(m.events / 20) * 100}%` }} /></div><span className="text-[10px] font-bold text-slate-700 w-4">{m.events}</span></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+{/*       <div className="bg-white rounded-2xl border border-slate-100 p-5"> */}
+{/*         <h3 className="text-sm font-bold text-slate-800 mb-4">Top Active Members</h3> */}
+{/*         <div className="grid grid-cols-1 md:grid-cols-2 gap-3"> */}
+{/*           {[...members].sort((a, b) => b.events - a.events).slice(0, 6).map((m, i) => ( */}
+{/*             <div key={m.id} className="flex items-center gap-3"> */}
+{/*               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${i === 0 ? "bg-amber-400 text-white" : "bg-slate-100 text-slate-500"}`}>{i + 1}</span> */}
+{/*               <Av initials={m.av} idx={i} size="sm" /> */}
+{/*               <div className="flex-1 min-w-0"><p className="text-xs font-bold text-slate-700 truncate">{m.name}</p><p className="text-[10px] text-slate-400">{m.role}</p></div> */}
+{/*               <div className="w-20 flex items-center gap-1.5"><div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-teal-500 rounded-full" style={{ width: `${(m.events / 20) * 100}%` }} /></div><span className="text-[10px] font-bold text-slate-700 w-4">{m.events}</span></div> */}
+{/*             </div> */}
+{/*           ))} */}
+{/*         </div> */}
+{/*       </div> */}
+{/*     </div> */}
+{/*   ); */}
+{/* } */}
 
 const handleLogout = () => {
   localStorage.clear();
@@ -475,6 +476,9 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [toast, setToast] = useState(null);
   const [requests, setRequests] = useState(initRequests);
+  const [members, setMembers] = useState([]);
+
+
 
   const pendingCount = requests.filter((r) => r.status === "Pending").length;
 
@@ -487,8 +491,8 @@ export default function App() {
     "create-event": <CreateEventPage onSuccess={() => { showToast("Event created successfully!"); setActivePage("manage-events"); }} />,
     "manage-events": <ManageEventsPage setActivePage={setActivePage} />,
     requests: <MyVolunteers />,
-    members: <MembersPage />,
-    reports: <ReportsPage onAction={showToast} />,
+    members: <MembersPage members={members} />,
+   reports: <ReportsPage onAction={showToast} members={members} />,
     profile: <ProfilePage onAction={showToast} />,
   };
 

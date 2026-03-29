@@ -1,100 +1,339 @@
-import { useState } from "react";
-import { mockMembers } from "../data/mockData";
-import { Badge, Avatar, SectionHeader } from "../components/UI";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-const roleColors = { Coordinator: "bg-violet-50 text-violet-700 border-violet-200", "Team Lead": "bg-blue-50 text-blue-700 border-blue-200", Volunteer: "bg-teal-50 text-teal-700 border-teal-200" };
+const initials = (email = "") =>
+  email.split("@")[0].slice(0, 2).toUpperCase();
 
 export default function MembersPage() {
-  const [members] = useState(mockMembers);
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("All");
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const role = user?.role?.toUpperCase();
 
-  const roles = ["All", "Team Lead", "Coordinator", "Volunteer"];
-  const filtered = members.filter((m) => {
-    const ms = m.name.toLowerCase().includes(search.toLowerCase()) || m.email.toLowerCase().includes(search.toLowerCase());
-    const mr = roleFilter === "All" || m.role === roleFilter;
-    return ms && mr;
-  });
+  const isNGO = role === "NGO";
+  const isVolunteer = role === "VOLUNTEER" || role === "USER";
+
+  const [requests, setRequests] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [ngoName, setNgoName] = useState("");
+  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState("");
+
+  const API = "http://localhost:8080/api/membership";
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 3000);
+  };
+
+  useEffect(() => {
+    if (!isNGO) {
+      setLoading(false);
+      return;
+    }
+
+    const headers = { Authorization: `Bearer ${token}` };
+
+    (async () => {
+      try {
+        const [req, mem] = await Promise.all([
+          axios.get(`${API}/my-requests`, { headers }),
+          axios.get(`${API}/members`, { headers }),
+        ]);
+
+        setRequests(Array.isArray(req.data) ? req.data : []);
+        setMembers(Array.isArray(mem.data) ? mem.data : []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [token, isNGO]);
+
+  const handleAction = async (id, action) => {
+    try {
+      await axios.put(`${API}/${action}/${id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, status: action.toUpperCase() } : r
+        )
+      );
+
+      showToast(action === "approve" ? "Approved successfully" : "Rejected");
+    } catch {
+      showToast("Something went wrong");
+    }
+  };
+
+  const sendRequest = async () => {
+    if (!ngoName.trim()) return;
+
+    try {
+      await axios.post(
+        `${API}/request`,
+        { ngoName, message },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      showToast("Request sent!");
+      setNgoName("");
+      setMessage("");
+    } catch (err) {
+      showToast(err.response?.data || "Failed");
+    }
+  };
+
+  // ───────── STATES ─────────
+
+  if (!user || !token) {
+    return (
+      <div className="flex items-center justify-center h-full text-slate-500">
+        Please login
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full text-slate-500">
+        Loading...
+      </div>
+    );
+  }
+
+  // ───────── NGO VIEW ─────────
+  if (isNGO) {
+    const pending = requests.filter((r) => r.status === "PENDING");
+
+    return (
+      <div className="space-y-6">
+
+        {/* STATS */}
+        <div className="grid grid-cols-3 gap-4">
+          <StatCard label="Pending" value={pending.length} color="amber" />
+          <StatCard label="Members" value={members.length} color="green" />
+          <StatCard label="Requests" value={requests.length} color="blue" />
+        </div>
+
+        {/* PENDING REQUESTS */}
+        <div className="bg-white rounded-2xl border p-5">
+          <h3 className="text-sm font-bold text-slate-800 mb-4">
+            Pending Requests
+          </h3>
+
+          {pending.length === 0 ? (
+            <p className="text-slate-400 text-sm">No pending requests</p>
+          ) : (
+            <div className="space-y-3">
+              {pending.map((r, i) => (
+                <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50">
+
+                  <Avatar initials={initials(r.userEmail)} idx={i} />
+
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-700">
+                      {r.userEmail}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Membership request
+                    </p>
+                  </div>
+
+                  <Badge status={r.status} />
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleAction(r.id, "approve")}
+                      className="px-3 py-1.5 text-xs bg-emerald-500 text-white rounded-lg"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleAction(r.id, "reject")}
+                      className="px-3 py-1.5 text-xs bg-red-100 text-red-600 rounded-lg"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ALL REQUESTS */}
+        <div className="bg-white rounded-2xl border p-5">
+          <h3 className="text-sm font-bold text-slate-800 mb-4">
+            All Requests
+          </h3>
+
+          {requests.length === 0 ? (
+            <p className="text-slate-400 text-sm">No requests found</p>
+          ) : (
+            <div className="space-y-3">
+              {requests.map((r, i) => (
+                <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50">
+
+                  <Avatar initials={initials(r.userEmail)} idx={i} />
+
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-700">
+                      {r.userEmail}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Membership request
+                    </p>
+                  </div>
+
+                  <Badge status={r.status} />
+
+                  {r.status === "PENDING" && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAction(r.id, "approve")}
+                        className="px-3 py-1.5 text-xs bg-emerald-500 text-white rounded-lg"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleAction(r.id, "reject")}
+                        className="px-3 py-1.5 text-xs bg-red-100 text-red-600 rounded-lg"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* MEMBERS */}
+        <div className="bg-white rounded-2xl border p-5">
+          <h3 className="text-sm font-bold text-slate-800 mb-4">
+            Active Members
+          </h3>
+
+          {members.length === 0 ? (
+            <p className="text-slate-400 text-sm">No members yet</p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {members.map((m, i) => (
+                <div key={m.id} className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-full">
+                  <Avatar initials={initials(m.userEmail)} idx={i} size="sm" />
+                  <span className="text-xs font-medium text-slate-700">
+                    {m.userEmail}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {toast && (
+          <div className="fixed bottom-5 right-5 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
+            {toast}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ───────── VOLUNTEER VIEW ─────────
+  if (isVolunteer) {
+    return (
+      <div className="max-w-xl mx-auto bg-white rounded-2xl border p-6 space-y-4">
+        <h2 className="text-lg font-bold text-slate-800">
+          Join an NGO
+        </h2>
+
+        <input
+          className="w-full border rounded-lg px-3 py-2 text-sm"
+          placeholder="NGO Name"
+          value={ngoName}
+          onChange={(e) => setNgoName(e.target.value)}
+        />
+
+        <textarea
+          className="w-full border rounded-lg px-3 py-2 text-sm"
+          placeholder="Message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+
+        <button
+          onClick={sendRequest}
+          className="w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold"
+        >
+          Send Request
+        </button>
+
+        {toast && (
+          <div className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
+            {toast}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return <div>Access Denied</div>;
+}
+
+// ───────── COMPONENTS ─────────
+
+const Badge = ({ status }) => {
+  const styles = {
+    PENDING: "bg-amber-50 text-amber-700",
+    APPROVED: "bg-emerald-50 text-emerald-700",
+    REJECTED: "bg-red-50 text-red-600",
+  };
 
   return (
-    <div className="space-y-5">
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { l: "Total Members", v: members.length },
-          { l: "Active", v: members.filter((m) => m.status === "Active").length },
-          { l: "Team Leads", v: members.filter((m) => m.role === "Team Lead").length },
-          { l: "Avg. Events/Member", v: (members.reduce((a, m) => a + m.events, 0) / members.length).toFixed(1) },
-        ].map((s) => (
-          <div key={s.l} className="bg-white rounded-2xl border border-slate-100 p-4">
-            <p className="text-2xl font-bold text-slate-800">{s.v}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{s.l}</p>
-          </div>
-        ))}
-      </div>
+    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${styles[status]}`}>
+      {status}
+    </span>
+  );
+};
 
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-        {/* Controls */}
-        <div className="p-4 border-b border-slate-50 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-          <div className="flex flex-wrap gap-2">
-            {roles.map((r) => (
-              <button key={r} onClick={() => setRoleFilter(r)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${roleFilter === r ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{r}</button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-1.5 border border-slate-200">
-            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search members…" className="bg-transparent text-xs text-slate-600 placeholder-slate-400 outline-none w-40" />
-          </div>
-        </div>
+const Avatar = ({ initials, idx = 0, size = "md" }) => {
+  const sizes = {
+    sm: "w-6 h-6 text-[10px]",
+    md: "w-9 h-9 text-xs",
+  };
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                {["Member", "Role", "Events Completed", "Joined", "Status", "Actions"].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {filtered.map((m, i) => (
-                <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <Avatar initials={m.avatar} size="md" colorIndex={i} />
-                      <div>
-                        <p className="text-xs font-semibold text-slate-800">{m.name}</p>
-                        <p className="text-[10px] text-slate-400">{m.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${roleColors[m.role] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{m.role}</span>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-teal-500 rounded-full" style={{ width: `${(m.events / 20) * 100}%` }} />
-                      </div>
-                      <span className="text-xs font-semibold text-slate-700">{m.events}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 text-xs text-slate-500">{m.joined}</td>
-                  <td className="px-4 py-3.5"><Badge status={m.status} /></td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <button className="text-xs text-teal-600 font-semibold hover:underline">View</button>
-                      <button className="text-xs text-slate-500 font-semibold hover:underline">Message</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filtered.length === 0 && <div className="text-center py-12 text-sm text-slate-400">No members found.</div>}
-      </div>
+  const colors = [
+    "from-teal-400 to-cyan-500",
+    "from-blue-400 to-blue-600",
+    "from-purple-400 to-indigo-500",
+  ];
+
+  return (
+    <div className={`${sizes[size]} rounded-full bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center text-white font-bold`}>
+      {initials}
     </div>
   );
-}
+};
+
+const StatCard = ({ label, value, color }) => {
+  const map = {
+    blue: "bg-blue-100 text-blue-600",
+    green: "bg-emerald-100 text-emerald-600",
+    amber: "bg-amber-100 text-amber-600",
+  };
+
+  return (
+    <div className="bg-white border rounded-2xl p-4">
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${map[color]}`}>
+        ●
+      </div>
+      <p className="text-xl font-bold text-slate-800 mt-2">{value}</p>
+      <p className="text-xs text-slate-400">{label}</p>
+    </div>
+  );
+};

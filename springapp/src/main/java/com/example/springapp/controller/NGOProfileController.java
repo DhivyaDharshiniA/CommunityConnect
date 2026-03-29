@@ -52,4 +52,9 @@ public class NGOProfileController {
 
         return service.updateProfile(id, ngo);
     }
+
+    @GetMapping("/list")
+    public List<NGOProfile> getAllNGOs() {
+        return service.getAllNGOs();
+    }
 }

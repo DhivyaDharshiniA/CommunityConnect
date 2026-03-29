@@ -175,7 +175,7 @@ function ProgressBar({ steps = 5 }) {
 }
 
 export default function CreateEventPage({ onSuccess }) {
-  const [form, setForm] = useState({ title: "", category: "", date: "", location: "", city: "", state: "", organizerName: "", contactEmail: "", contactPhone: "", description: "", requirements: "", benefits: "", bannerFile: null });
+  const [form, setForm] = useState({ title: "", category: "", date: "", location: "", city: "", state: "", organizerName: "", contactEmail: "", contactPhone: "", description: "", requirements: "", benefits: "",noOfVol: "", bannerFile: null });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [bannerPreview, setBannerPreview] = useState(null);
@@ -195,6 +195,7 @@ export default function CreateEventPage({ onSuccess }) {
     if (!form.contactEmail.trim())  e.contactEmail  = "Contact email is required";
     if (!form.contactPhone.trim())  e.contactPhone  = "Contact phone is required";
     if (!form.description.trim())   e.description   = "Event description is required";
+    if (!form.noOfVol) e.noOfVol = "Number of volunteers required";
     return e;
   };
 
@@ -205,7 +206,8 @@ export default function CreateEventPage({ onSuccess }) {
     try {
       setSubmitting(true);
       const data = new FormData();
-      Object.entries({ title: form.title, description: form.description, category: form.category, venue: form.location, city: form.city, state: form.state, organizerName: form.organizerName, contactEmail: form.contactEmail, contactPhone: form.contactPhone, startDateTime: form.date + ":00", endDateTime: form.date + ":00", requirements: form.requirements || "", benefits: form.benefits || "" }).forEach(([k, v]) => data.append(k, v));
+      Object.entries({ title: form.title, description: form.description, category: form.category, venue: form.location, city: form.city, state: form.state, organizerName: form.organizerName, contactEmail: form.contactEmail, contactPhone: form.contactPhone, startDateTime: form.date + ":00", endDateTime: form.date + ":00",noOfVol:form.noOfVol, requirements: form.requirements || "", benefits: form.benefits || "" }).forEach(([k, v]) => data.append(k, v));
+
       if (form.bannerFile) data.append("bannerImage", form.bannerFile);
       const token = localStorage.getItem("token");
       await axios.post("http://localhost:8080/api/events/create", data, { headers: { Authorization: "Bearer " + token } });
@@ -344,6 +346,21 @@ export default function CreateEventPage({ onSuccess }) {
                   onFocus={() => setFocused("date")} onBlur={() => setFocused(null)}
                   style={{ ...inputStyle("date", errors.date, focused), colorScheme: "light" }} />
               </Field>
+              <Field id="noOfVol" label="Volunteers Required" error={errors.noOfVol} focused={focused}>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  placeholder="e.g. 20"
+                                  value={form.noOfVol}
+                                  onChange={(e) => {
+                                    setForm({ ...form, noOfVol: e.target.value });
+                                    setErrors({ ...errors, noOfVol: "" });
+                                  }}
+                                  onFocus={() => setFocused("noOfVol")}
+                                  onBlur={() => setFocused(null)}
+                                  style={inputStyle("noOfVol", errors.noOfVol, focused)}
+                                />
+                              </Field>
             </Section>
 
             <Section number="2" title="Event Location" description="Set venue details using the map or enter manually" delay={0.08}>

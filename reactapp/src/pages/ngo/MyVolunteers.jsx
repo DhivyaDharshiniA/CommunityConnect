@@ -1,192 +1,203 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { getMyVolunteers } from "../../api/volunteerService";
 
-// ── Palette cycling for avatar + row accents ──────────────────────────────────
-const PALETTES = [
-  { grad: "linear-gradient(135deg,#6366f1,#8b5cf6)", light: "#ede9fe", text: "#6d28d9", dot: "#8b5cf6" },
-  { grad: "linear-gradient(135deg,#0ea5e9,#06b6d4)",  light: "#e0f2fe", text: "#0369a1", dot: "#0ea5e9" },
-  { grad: "linear-gradient(135deg,#f59e0b,#f97316)",  light: "#fff7ed", text: "#b45309", dot: "#f59e0b" },
-  { grad: "linear-gradient(135deg,#10b981,#059669)",  light: "#ecfdf5", text: "#065f46", dot: "#10b981" },
-  { grad: "linear-gradient(135deg,#e11d48,#f43f5e)",  light: "#fff1f2", text: "#9f1239", dot: "#e11d48" },
-  { grad: "linear-gradient(135deg,#f97316,#eab308)",  light: "#fefce8", text: "#92400e", dot: "#f97316" },
-];
-
-// ── Skill tag colours ─────────────────────────────────────────────────────────
-const SKILL_COLORS = [
-  { bg: "#ede9fe", color: "#6d28d9" },
-  { bg: "#e0f2fe", color: "#0369a1" },
-  { bg: "#ecfdf5", color: "#065f46" },
-  { bg: "#fff7ed", color: "#b45309" },
-  { bg: "#fce7f3", color: "#9d174d" },
-  { bg: "#f0fdf4", color: "#166534" },
-];
-
-function Avatar({ name, palette, size = 44 }) {
-  const initials = name
-    ? name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()
-    : "?";
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED COMPONENTS (matching dashboard style)
+// ─────────────────────────────────────────────────────────────────────────────
+const Badge = ({ status }) => {
+  const cfg = {
+    Active: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    Pending: "bg-amber-50 text-amber-700 border-amber-200",
+    Completed: "bg-slate-100 text-slate-600 border-slate-200",
+    Upcoming: "bg-blue-50 text-blue-700 border-blue-200",
+  };
   return (
-    <div style={{
-      width: size, height: size, borderRadius: "50%",
-      background: palette.grad,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: size * 0.36, fontWeight: 800, color: "#fff",
-      fontFamily: "'Syne', sans-serif",
-      flexShrink: 0,
-      boxShadow: `0 4px 14px ${palette.dot}55`,
-    }}>{initials}</div>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg[status] || cfg.Pending}`}>
+      {status}
+    </span>
   );
-}
+};
 
-// ── Expandable row ────────────────────────────────────────────────────────────
-function VolunteerRow({ v, index, palette }) {
+const Av = ({ initials, idx = 0, size = "md" }) => {
+  const sz = { sm: "w-7 h-7 text-[10px]", md: "w-9 h-9 text-xs", lg: "w-12 h-12 text-sm" };
+  const colors = [
+    "from-teal-400 to-cyan-500", "from-blue-400 to-blue-600",
+    "from-violet-400 to-purple-500", "from-amber-400 to-orange-500",
+    "from-rose-400 to-pink-500", "from-emerald-400 to-green-500"
+  ];
+  return (
+    <div className={`${sz[size]} rounded-full bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center text-white font-bold flex-shrink-0`}>
+      {initials}
+    </div>
+  );
+};
+
+const ProgressBar = ({ value, max }) => {
+  const p = Math.min(100, Math.round((value / max) * 100));
+  const c = p >= 80 ? "bg-emerald-500" : p >= 50 ? "bg-amber-400" : "bg-teal-400";
+  return (
+    <div className="w-full">
+      <div className="flex justify-between mb-1">
+        <span className="text-[10px] text-slate-400">{value}/{max}</span>
+        <span className="text-[10px] font-semibold text-slate-600">{p}%</span>
+      </div>
+      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full ${c} rounded-full transition-all duration-500`} style={{ width: `${p}%` }} />
+      </div>
+    </div>
+  );
+};
+
+const StatCard = ({ label, value, sub, icon, color }) => {
+  const icBg = {
+    teal: "bg-teal-100 text-teal-600",
+    blue: "bg-blue-100 text-blue-600",
+    amber: "bg-amber-100 text-amber-600",
+    green: "bg-emerald-100 text-emerald-600",
+    purple: "bg-violet-100 text-violet-600"
+  };
+  return (
+    <div className={`bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-md transition-all`}>
+      <div className="flex items-start justify-between mb-4">
+        <div className={`w-10 h-10 rounded-xl ${icBg[color] || "bg-slate-100"} flex items-center justify-center`}>
+          {icon}
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-slate-800 mb-0.5">{value}</p>
+      <p className="text-sm font-medium text-slate-500">{label}</p>
+      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SKILL TAG COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+const SkillTag = ({ skill, idx }) => {
+  const colors = [
+    "bg-teal-50 text-teal-700 border-teal-200",
+    "bg-blue-50 text-blue-700 border-blue-200",
+    "bg-violet-50 text-violet-700 border-violet-200",
+    "bg-amber-50 text-amber-700 border-amber-200",
+    "bg-rose-50 text-rose-700 border-rose-200",
+    "bg-emerald-50 text-emerald-700 border-emerald-200",
+  ];
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${colors[idx % colors.length]}`}>
+      {skill}
+    </span>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VOLUNTEER ROW COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+function VolunteerRow({ v, index, onViewDetails }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <>
       {/* Main row */}
       <tr
-        onClick={() => setExpanded(x => !x)}
-        style={{
-          cursor: "pointer",
-          background: expanded ? palette.light : index % 2 === 0 ? "#fafbff" : "#fff",
-          transition: "background 0.2s",
-          animation: `rowIn 0.35s ease ${index * 0.055}s both`,
-        }}
-        onMouseOver={e => { if (!expanded) e.currentTarget.style.background = palette.light + "bb"; }}
-        onMouseOut={e => { if (!expanded) e.currentTarget.style.background = index % 2 === 0 ? "#fafbff" : "#fff"; }}
+        className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors cursor-pointer group"
+        onClick={() => setExpanded(!expanded)}
       >
         {/* # */}
-        <td style={{ padding: "14px 16px", textAlign: "center", width: 48 }}>
-          <span style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            width: 26, height: 26, borderRadius: "50%",
-            background: palette.grad,
-            fontSize: 11, fontWeight: 800, color: "#fff",
-            fontFamily: "'Syne', sans-serif",
-            boxShadow: `0 2px 8px ${palette.dot}44`,
-          }}>{index + 1}</span>
+        <td className="px-4 py-3.5 text-center w-12">
+          <span className="text-xs font-bold text-slate-400">#{index + 1}</span>
         </td>
 
         {/* Volunteer */}
-        <td style={{ padding: "14px 12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Avatar name={v.volunteerName} palette={palette} />
+        <td className="px-4 py-3.5">
+          <div className="flex items-center gap-3">
+            <Av initials={v.volunteerName?.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase() || "??"} idx={index} size="sm" />
             <div>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a", fontFamily: "'Syne', sans-serif" }}>
-                {v.volunteerName}
-              </p>
-              <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748b" }}>📧 {v.email}</p>
+              <p className="text-sm font-bold text-slate-800">{v.volunteerName}</p>
+              <p className="text-[11px] text-slate-400">{v.email}</p>
             </div>
           </div>
         </td>
 
         {/* Skills */}
-        <td style={{ padding: "14px 12px" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-            {(v.skills || []).slice(0, 3).map((s, i) => {
-              const sc = SKILL_COLORS[i % SKILL_COLORS.length];
-              return (
-                <span key={i} style={{
-                  fontSize: 10, fontWeight: 700,
-                  background: sc.bg, color: sc.color,
-                  padding: "3px 9px", borderRadius: 99,
-                  letterSpacing: "0.03em",
-                }}>{s}</span>
-              );
-            })}
-            {(v.skills || []).length > 3 && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", background: "#f1f5f9", padding: "3px 9px", borderRadius: 99 }}>
-                +{v.skills.length - 3}
+        <td className="px-4 py-3.5">
+          <div className="flex flex-wrap gap-1.5">
+            {(v.skills || []).slice(0, 2).map((s, i) => (
+              <SkillTag key={i} skill={s} idx={i} />
+            ))}
+            {(v.skills || []).length > 2 && (
+              <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                +{v.skills.length - 2}
               </span>
             )}
           </div>
         </td>
 
-        {/* Events applied */}
-        <td style={{ padding: "14px 12px", textAlign: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <span style={{
-              fontSize: 20, fontWeight: 900,
-              color: palette.dot, fontFamily: "'Syne', sans-serif",
-            }}>{v.totalEventsRegistered}</span>
-            <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>events</span>
+        {/* Events */}
+        <td className="px-4 py-3.5 text-center">
+          <div className="inline-flex items-center gap-2">
+            <span className="text-lg font-bold text-teal-600">{v.totalEventsRegistered || 0}</span>
+            <span className="text-[10px] text-slate-400">events</span>
           </div>
         </td>
 
+        {/* Joined Date */}
+        <td className="px-4 py-3.5 text-center">
+          <span className="text-xs text-slate-500">{v.joinedDate || "Mar 2025"}</span>
+        </td>
+
         {/* Expand toggle */}
-        <td style={{ padding: "14px 16px", textAlign: "center", width: 48 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: expanded ? palette.light : "#f1f5f9",
-            border: `1.5px solid ${expanded ? palette.dot + "55" : "#e2e8f0"}`,
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, color: expanded ? palette.dot : "#94a3b8",
-            transition: "all 0.2s",
-            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-          }}>▾</div>
+        <td className="px-4 py-3.5 text-center w-10">
+          <div className={`transform transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}>
+            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </td>
       </tr>
 
       {/* Expanded detail row */}
       {expanded && (
-        <tr style={{ background: palette.light, animation: "expandIn 0.22s ease both" }}>
-          <td colSpan={5} style={{ padding: "0 20px 18px 80px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, paddingTop: 4 }}>
-
-              {/* Applied events */}
-              <div style={{
-                background: "#fff",
-                borderRadius: 12,
-                padding: "14px 16px",
-                border: `1.5px solid ${palette.dot}33`,
-              }}>
-                <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 800, color: palette.text, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                  🗓 Applied Events
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {(v.appliedEvents || []).map((ev, i) => (
-                    <div key={i} style={{
-                      display: "flex", alignItems: "center", gap: 9,
-                      padding: "7px 10px", borderRadius: 8,
-                      background: i % 2 === 0 ? palette.light : "transparent",
-                    }}>
-                      <span style={{
-                        width: 6, height: 6, borderRadius: "50%",
-                        background: palette.dot, flexShrink: 0,
-                        boxShadow: `0 0 5px ${palette.dot}88`,
-                      }} />
-                      <span style={{ fontSize: 12, color: "#334155", fontWeight: 600 }}>{ev}</span>
-                    </div>
-                  ))}
+        <tr className="bg-slate-50/80">
+          <td colSpan={6} className="px-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Applied Events */}
+              <div className="bg-white rounded-xl border border-slate-100 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-4 h-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Applied Events</h4>
+                </div>
+                <div className="space-y-2">
+                  {(v.appliedEvents || []).length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-4">No events applied yet</p>
+                  ) : (
+                    (v.appliedEvents || []).map((ev, i) => (
+                      <div key={i} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                        <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                        <span className="text-xs text-slate-600">{ev}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
-              {/* All skills */}
-              <div style={{
-                background: "#fff",
-                borderRadius: 12,
-                padding: "14px 16px",
-                border: `1.5px solid ${palette.dot}33`,
-              }}>
-                <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 800, color: palette.text, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                  ⚡ All Skills
-                </p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {(v.skills || []).map((s, i) => {
-                    const sc = SKILL_COLORS[i % SKILL_COLORS.length];
-                    return (
-                      <span key={i} style={{
-                        fontSize: 11, fontWeight: 700,
-                        background: sc.bg, color: sc.color,
-                        padding: "4px 11px", borderRadius: 99,
-                        border: `1px solid ${sc.color}22`,
-                      }}>{s}</span>
-                    );
-                  })}
+              {/* All Skills */}
+              <div className="bg-white rounded-xl border border-slate-100 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-4 h-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">All Skills</h4>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(v.skills || []).length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-4 w-full">No skills listed</p>
+                  ) : (
+                    (v.skills || []).map((s, i) => <SkillTag key={i} skill={s} idx={i} />)
+                  )}
                 </div>
               </div>
-
             </div>
           </td>
         </tr>
@@ -195,18 +206,29 @@ function VolunteerRow({ v, index, palette }) {
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
 export default function MyVolunteers() {
   const [volunteers, setVolunteers] = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [search, setSearch]         = useState("");
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
-  useEffect(() => { loadVolunteers(); }, []);
+  useEffect(() => {
+    loadVolunteers();
+  }, []);
 
   const loadVolunteers = async () => {
     try {
       const data = await getMyVolunteers();
-      setVolunteers(data);
+      // Add some mock data for demonstration
+      const enrichedData = data.map((v, i) => ({
+        ...v,
+        joinedDate: v.joinedDate || ["Jan 2025", "Feb 2025", "Mar 2025"][i % 3],
+        status: v.status || "Active",
+      }));
+      setVolunteers(enrichedData);
     } catch (err) {
       console.error("Error loading volunteers", err);
     } finally {
@@ -214,210 +236,169 @@ export default function MyVolunteers() {
     }
   };
 
-  const filtered = volunteers.filter(v =>
-    v.volunteerName?.toLowerCase().includes(search.toLowerCase()) ||
-    v.email?.toLowerCase().includes(search.toLowerCase()) ||
-    (v.skills || []).some(s => s.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filtered = volunteers.filter(v => {
+    const matchesSearch =
+      v.volunteerName?.toLowerCase().includes(search.toLowerCase()) ||
+      v.email?.toLowerCase().includes(search.toLowerCase()) ||
+      (v.skills || []).some(s => s.toLowerCase().includes(search.toLowerCase()));
+    const matchesStatus = statusFilter === "All" || v.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const totalEvents = volunteers.reduce((s, v) => s + (v.totalEventsRegistered || 0), 0);
   const totalSkills = new Set(volunteers.flatMap(v => v.skills || [])).size;
+  const activeCount = volunteers.filter(v => v.status === "Active").length;
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
-        @keyframes fadeDown  { from { opacity:0; transform:translateY(-18px) } to { opacity:1; transform:none } }
-        @keyframes rowIn     { from { opacity:0; transform:translateX(-10px) } to { opacity:1; transform:none } }
-        @keyframes expandIn  { from { opacity:0; transform:scaleY(0.92); transform-origin:top } to { opacity:1; transform:scaleY(1) } }
-        @keyframes shimmer   { 0%,100% { opacity:.55 } 50% { opacity:1 } }
-        @keyframes floatDot  { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-8px) } }
-        .mv-table tr { border-bottom: 1px solid #f1f5f9; }
-        .mv-table tr:last-child { border-bottom: none; }
-        .mv-search:focus { outline:none; border-color:#6366f1 !important; box-shadow:0 0 0 3px #6366f133; }
-      `}</style>
+    <div className="space-y-5">
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard
+          label="Total Volunteers"
+          value={volunteers.length}
+          sub="Active participants"
+          color="teal"
+          icon={
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          }
+        />
+        <StatCard
+          label="Active Volunteers"
+          value={activeCount}
+          sub="Currently engaged"
+          color="green"
+          icon={
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        />
+        <StatCard
+          label="Event Registrations"
+          value={totalEvents}
+          sub="Total signups"
+          color="blue"
+          icon={
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          }
+        />
+        <StatCard
+          label="Unique Skills"
+          value={totalSkills}
+          sub="Across all volunteers"
+          color="purple"
+          icon={
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          }
+        />
+      </div>
 
-      <div style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh" }}>
-
-        {/* ── Hero Header ───────────────────────────────────────────────── */}
-        <div style={{
-          background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4f46e5 75%, #6366f1 100%)",
-          borderRadius: 22,
-          padding: "30px 30px 28px",
-          marginBottom: 22,
-          position: "relative",
-          overflow: "hidden",
-          animation: "fadeDown 0.4s ease both",
-        }}>
-          {/* Decorative blobs */}
-          {[
-            { w:160, h:160, top:-40, right:-30, op:0.08 },
-            { w:100, h:100, bottom:-20, right:120, op:0.1 },
-            { w:60,  h:60,  top:20,   right:200, op:0.07 },
-          ].map((b,i) => (
-            <div key={i} style={{
-              position:"absolute", width:b.w, height:b.h, borderRadius:"50%",
-              background:"white", opacity:b.op,
-              top:b.top, bottom:b.bottom, right:b.right,
-              animation:`floatDot ${2.5 + i*0.7}s ease-in-out infinite`,
-            }}/>
-          ))}
-
-          <div style={{ position:"relative", zIndex:1 }}>
-            <p style={{ margin:"0 0 3px", fontSize:11, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.5)" }}>
-              ✦ Volunteer Hub
-            </p>
-            <h1 style={{ fontFamily:"'Syne', sans-serif", fontSize:28, fontWeight:900, color:"#fff", margin:"0 0 18px", letterSpacing:"-0.02em" }}>
-              My Volunteers
-            </h1>
-
-            {/* Stats row */}
-            <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
-              {[
-                { icon:"👥", label:"Total Volunteers", value: volunteers.length },
-                { icon:"🗓", label:"Event Registrations", value: totalEvents },
-                { icon:"⚡", label:"Unique Skills", value: totalSkills },
-              ].map((stat, i) => (
-                <div key={i} style={{
-                  background:"rgba(255,255,255,0.1)",
-                  backdropFilter:"blur(8px)",
-                  border:"1px solid rgba(255,255,255,0.18)",
-                  borderRadius:14, padding:"12px 18px",
-                  animation:`fadeDown 0.4s ease ${0.1 + i*0.07}s both`,
-                }}>
-                  <p style={{ margin:0, fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.55)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                    {stat.icon} {stat.label}
-                  </p>
-                  <p style={{ margin:"4px 0 0", fontSize:26, fontWeight:900, color:"#fff", fontFamily:"'Syne', sans-serif", lineHeight:1 }}>
-                    {stat.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Search bar ────────────────────────────────────────────────── */}
-        <div style={{
-          background:"#fff", borderRadius:14,
-          border:"1.5px solid #e2e8f0",
-          padding:"10px 16px", marginBottom:18,
-          display:"flex", alignItems:"center", gap:10,
-          boxShadow:"0 2px 8px rgba(0,0,0,0.04)",
-          animation:"fadeDown 0.4s ease 0.15s both",
-        }}>
-          <span style={{ fontSize:15, color:"#94a3b8" }}>🔍</span>
-          <input
-            className="mv-search"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or email or skills…"
-            style={{
-              flex:1, border:"none", background:"transparent",
-              fontSize:13, color:"#334155", fontFamily:"'DM Sans', sans-serif",
-              outline:"none",
-            }}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} style={{
-              border:"none", background:"#f1f5f9", borderRadius:6,
-              width:22, height:22, cursor:"pointer", fontSize:11, color:"#64748b",
-              display:"flex", alignItems:"center", justifyContent:"center",
-            }}>✕</button>
-          )}
-          <span style={{ fontSize:11, fontWeight:700, color:"#94a3b8", whiteSpace:"nowrap" }}>
-            {filtered.length} of {volunteers.length}
-          </span>
-        </div>
-
-        {/* ── Table ─────────────────────────────────────────────────────── */}
-        {loading ? (
-          /* Skeleton */
-          <div style={{ background:"#fff", borderRadius:18, overflow:"hidden", border:"1.5px solid #e2e8f0" }}>
-            {[...Array(5)].map((_, i) => (
-              <div key={i} style={{
-                display:"flex", alignItems:"center", gap:14, padding:"18px 20px",
-                borderBottom:"1px solid #f1f5f9",
-                animation:`shimmer 1.4s ease ${i*0.12}s infinite`,
-              }}>
-                <div style={{ width:44, height:44, borderRadius:"50%", background:"#f1f5f9" }} />
-                <div style={{ flex:1 }}>
-                  <div style={{ height:13, background:"#f1f5f9", borderRadius:6, width:"40%", marginBottom:7 }} />
-                  <div style={{ height:10, background:"#f8fafc", borderRadius:6, width:"60%" }} />
-                </div>
-              </div>
+      {/* Filters Bar */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-3.5">
+        <div className="flex flex-col sm:flex-row gap-3 justify-between">
+          <div className="flex flex-wrap gap-1.5">
+            {["All", "Active", "Pending", "Completed"].map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setStatusFilter(filter)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  statusFilter === filter
+                    ? "bg-teal-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {filter}
+              </button>
             ))}
           </div>
-        ) : filtered.length === 0 ? (
-          <div style={{
-            textAlign:"center", padding:"70px 20px",
-            background:"#fff", borderRadius:18,
-            border:"1.5px dashed #e2e8f0",
-            animation:"fadeDown 0.4s ease both",
-          }}>
-            <div style={{ fontSize:52, marginBottom:12 }}>🙋</div>
-            <p style={{ margin:0, fontSize:16, fontWeight:800, color:"#475569", fontFamily:"'Syne', sans-serif" }}>
-              {search ? `No match for "${search}"` : "No volunteers yet"}
-            </p>
-            <p style={{ margin:"7px 0 0", fontSize:13, color:"#94a3b8" }}>
-              Volunteers who register for your events will appear here
-            </p>
+          <div className="flex items-center gap-1.5 bg-slate-50 rounded-lg px-3 py-1.5 border border-slate-200">
+            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, email or skills..."
+              className="bg-transparent text-xs outline-none w-48 sm:w-64 text-slate-600 placeholder-slate-400"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="text-slate-400 hover:text-slate-600">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
-        ) : (
-          <div style={{
-            background:"#fff", borderRadius:18,
-            border:"1.5px solid #e2e8f0",
-            overflow:"hidden",
-            boxShadow:"0 4px 24px rgba(99,102,241,0.07)",
-            animation:"fadeDown 0.4s ease 0.2s both",
-          }}>
-            <table className="mv-table" style={{ width:"100%", borderCollapse:"collapse" }}>
+        </div>
+      </div>
+
+      {/* Volunteers Table */}
+      {loading ? (
+        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 p-4 border-b border-slate-100 animate-pulse">
+              <div className="w-9 h-9 rounded-full bg-slate-200" />
+              <div className="flex-1">
+                <div className="h-3 bg-slate-200 rounded w-32 mb-2" />
+                <div className="h-2 bg-slate-100 rounded w-48" />
+              </div>
+              <div className="w-20 h-6 bg-slate-200 rounded-full" />
+            </div>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-slate-600 mb-1">
+            {search ? `No volunteers match "${search}"` : "No volunteers yet"}
+          </p>
+          <p className="text-xs text-slate-400">
+            Volunteers who register for your events will appear here
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
               <thead>
-                <tr style={{
-                  background:"linear-gradient(135deg, #1e1b4b, #4f46e5)",
-                }}>
-                  {["#","Volunteer","Skills","Events",""].map((h, i) => (
-                    <th key={i} style={{
-                      padding: i === 0 ? "14px 16px" : "14px 12px",
-                      textAlign: [0,3,4].includes(i) ? "center" : "left",
-                      fontSize: 10, fontWeight: 800,
-                      color: "rgba(255,255,255,0.7)",
-                      letterSpacing: "0.1em", textTransform: "uppercase",
-                      fontFamily: "'DM Sans', sans-serif",
-                      whiteSpace: "nowrap",
-                    }}>{h}</th>
-                  ))}
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider w-12">#</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Volunteer</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Skills</th>
+                  <th className="text-center px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Events</th>
+                  <th className="text-center px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Joined</th>
+                  <th className="text-center px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider w-10"></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-50">
                 {filtered.map((v, i) => (
-                  <VolunteerRow
-                    key={i}
-                    v={v}
-                    index={i}
-                    palette={PALETTES[i % PALETTES.length]}
-                  />
+                  <VolunteerRow key={i} v={v} index={i} />
                 ))}
               </tbody>
             </table>
-
-            {/* Footer */}
-            <div style={{
-              padding:"12px 20px",
-              borderTop:"1.5px solid #f1f5f9",
-              background:"#fafbff",
-              display:"flex", alignItems:"center", justifyContent:"space-between",
-            }}>
-              <span style={{ fontSize:12, color:"#94a3b8", fontWeight:600 }}>
-                Showing {filtered.length} volunteer{filtered.length !== 1 ? "s" : ""}
-              </span>
-              <span style={{ fontSize:11, color:"#c7d2fe", fontWeight:700, letterSpacing:"0.05em" }}>
-                ✦ Click any row to expand details
-              </span>
-            </div>
           </div>
-        )}
-      </div>
-    </>
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <span className="text-xs text-slate-500">
+              Showing {filtered.length} of {volunteers.length} volunteers
+            </span>
+            <span className="text-[10px] text-slate-400">
+              Click any row to expand details
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
