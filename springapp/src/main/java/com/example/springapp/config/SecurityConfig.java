@@ -111,6 +111,7 @@ public class SecurityConfig {
                         // Static files
                         .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/profile/**").permitAll()
                         .requestMatchers("/**/*.png", "/**/*.jpg", "/**/*.jpeg", "/**/*.gif").permitAll()
                         .requestMatchers("/**/*.css", "/**/*.js").permitAll()
 

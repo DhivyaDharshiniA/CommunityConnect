@@ -8,6 +8,7 @@ import HelpFeed from "./HelpFeed";
 import { getAllEvents } from "../../api/eventService";
 import CreateEvent from "./CreateEvent";
 import JoinMemberRequest from "./JoinMemberRequest";
+import MyProfile from "./MyProfile";
 
 export const FONTS = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
@@ -133,6 +134,7 @@ export default function UserDashboard() {
         {activeTab === "helpFeed" && <HelpFeed />}
         {activeTab === "sos" && <SosPage sosHistory={sosHistory} setSosHistory={setSosHistory} />}
         {activeTab === "joinMember" && <JoinMemberRequest />}
+        {activeTab === "profile" && <MyProfile />}
       </main>
     </div>
   );

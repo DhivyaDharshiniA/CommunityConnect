@@ -2,13 +2,14 @@ package com.example.springapp.controller;
 
 import com.example.springapp.entity.Donation;
 import com.example.springapp.service.DonationService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/donations")   // plural and consistent with REST
+@RequestMapping("/api/donations")
 @CrossOrigin(origins = "*")
 public class DonationController {
 
@@ -26,5 +27,15 @@ public class DonationController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping
+    public List<Donation> getAllDonations() {
+        return donationService.getAllDonations();
+    }
+
+    @GetMapping("/request/{helpRequestId}")
+    public List<Donation> getDonationsByRequest(@PathVariable Long helpRequestId) {
+        return donationService.getDonationsByRequest(helpRequestId);
     }
 }

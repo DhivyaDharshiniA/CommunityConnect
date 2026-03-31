@@ -46,29 +46,30 @@ function Toast({ message, type, onDone }) {
     return () => clearTimeout(t);
   }, []);
 
-  const bg     = type === "error" ? "#fef2f2" : "#f0fdf4";
-  const color  = type === "error" ? "#dc2626"  : "#16a34a";
-  const border = type === "error" ? "#fecaca"  : "#bbf7d0";
-  const icon   = type === "error" ? "✕" : "✓";
+  const config = {
+    success: { bg: "#f0fdf4", border: "#bbf7d0", color: "#16a34a", icon: "✓" },
+    error: { bg: "#fef2f2", border: "#fecaca", color: "#dc2626", icon: "✕" },
+  };
+  const style = config[type] || config.success;
 
   return (
     <div style={{
       position: "fixed", bottom: 28, right: 28, zIndex: 9999,
-      display: "flex", alignItems: "center", gap: 10,
-      background: bg, border: `1.5px solid ${border}`,
-      borderRadius: 14, padding: "13px 18px",
-      boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-      fontFamily: "'Outfit', sans-serif",
-      animation: "toastIn 0.3s cubic-bezier(0.22,1.2,0.36,1) both",
-      minWidth: 240,
+      display: "flex", alignItems: "center", gap: 12,
+      background: style.bg, border: `1px solid ${style.border}`,
+      borderRadius: 12, padding: "12px 20px",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      animation: "toastSlideIn 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards",
+      backdropFilter: "blur(8px)",
     }}>
       <span style={{
-        width: 24, height: 24, borderRadius: "50%",
-        background: color, color: "white",
+        width: 22, height: 22, borderRadius: "50%",
+        background: style.color, color: "white",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 12, fontWeight: 800, flexShrink: 0,
-      }}>{icon}</span>
-      <span style={{ fontSize: 13, fontWeight: 600, color }}>{message}</span>
+        fontSize: 12, fontWeight: 700,
+      }}>{style.icon}</span>
+      <span style={{ fontSize: 13, fontWeight: 500, color: "#1f2937" }}>{message}</span>
     </div>
   );
 }
@@ -81,51 +82,62 @@ function ConfirmDialog({ onConfirm, onCancel }) {
       onClick={onCancel}
       style={{
         position: "fixed", inset: 0, zIndex: 2000,
-        background: "rgba(15,23,42,0.55)",
-        backdropFilter: "blur(8px)",
+        background: "rgba(0, 0, 0, 0.5)",
+        backdropFilter: "blur(4px)",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: 24,
-        animation: "overlayIn 0.18s ease both",
+        animation: "fadeIn 0.2s ease",
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
           background: "white", borderRadius: 20,
-          padding: "28px 28px 22px",
-          maxWidth: 380, width: "100%",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.25)",
-          animation: "modalIn 0.28s cubic-bezier(0.22,1.2,0.36,1) both",
-          fontFamily: "'Outfit', sans-serif",
+          padding: "28px 28px 24px",
+          maxWidth: 400, width: "100%",
+          boxShadow: "0 24px 48px rgba(0,0,0,0.2)",
+          fontFamily: "'Inter', sans-serif",
+          animation: "scaleIn 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1)",
         }}
       >
-        <div style={{ fontSize: 36, marginBottom: 12, textAlign: "center" }}>🗑️</div>
-        <h3 style={{
-          fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800,
-          color: "#0f172a", margin: "0 0 8px", textAlign: "center",
-        }}>Delete Event?</h3>
-        <p style={{ margin: "0 0 22px", fontSize: 13, color: "#64748b", textAlign: "center", lineHeight: 1.6 }}>
-          This action cannot be undone. The event and all related data will be permanently removed.
-        </p>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: "50%",
+            background: "#fef2f2", color: "#dc2626",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 28, margin: "0 auto 16px",
+          }}>🗑️</div>
+          <h3 style={{
+            fontSize: 18, fontWeight: 600, color: "#111827",
+            margin: "0 0 8px", fontFamily: "'Inter', sans-serif",
+          }}>Delete Event</h3>
+          <p style={{ fontSize: 13, color: "#6b7280", lineHeight: 1.5, margin: 0 }}>
+            This action cannot be undone. The event and all related data will be permanently removed.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: 12 }}>
           <button
             onClick={onCancel}
             style={{
               flex: 1, padding: "10px 0", borderRadius: 10,
-              border: "1.5px solid #e2e8f0", background: "#f8fafc",
-              fontSize: 13, fontWeight: 700, color: "#475569",
-              cursor: "pointer", fontFamily: "'Outfit', sans-serif",
+              border: "1px solid #e5e7eb", background: "white",
+              fontSize: 13, fontWeight: 500, color: "#374151",
+              cursor: "pointer", transition: "all 0.2s",
             }}
+            onMouseOver={e => e.currentTarget.style.background = "#f9fafb"}
+            onMouseOut={e => e.currentTarget.style.background = "white"}
           >Cancel</button>
           <button
             onClick={onConfirm}
             style={{
               flex: 1, padding: "10px 0", borderRadius: 10,
-              border: "1.5px solid #fecaca", background: "#fff1f2",
-              fontSize: 13, fontWeight: 700, color: "#e11d48",
-              cursor: "pointer", fontFamily: "'Outfit', sans-serif",
+              border: "none", background: "#dc2626",
+              fontSize: 13, fontWeight: 500, color: "white",
+              cursor: "pointer", transition: "all 0.2s",
             }}
-          >Yes, Delete</button>
+            onMouseOver={e => e.currentTarget.style.background = "#b91c1c"}
+            onMouseOut={e => e.currentTarget.style.background = "#dc2626"}
+          >Delete</button>
         </div>
       </div>
     </div>
@@ -169,15 +181,16 @@ function EditModal({ event, onClose, onSaved }) {
   };
 
   const inputStyle = {
-    width: "100%", padding: "9px 12px", borderRadius: 9,
-    border: "1.5px solid #e2e8f0", fontSize: 12,
-    fontFamily: "'Outfit', sans-serif", color: "#334155",
-    outline: "none", background: "#f8fafc", boxSizing: "border-box",
+    width: "100%", padding: "10px 12px", borderRadius: 8,
+    border: "1px solid #e5e7eb", fontSize: 13,
+    fontFamily: "'Inter', sans-serif", color: "#1f2937",
+    outline: "none", background: "#ffffff", boxSizing: "border-box",
+    transition: "all 0.2s",
   };
   const labelStyle = {
-    fontSize: 10, fontWeight: 700, color: "#94a3b8",
-    letterSpacing: "0.1em", textTransform: "uppercase",
-    display: "block", marginBottom: 4,
+    fontSize: 11, fontWeight: 600, color: "#6b7280",
+    letterSpacing: "0.03em", textTransform: "uppercase",
+    display: "block", marginBottom: 6,
   };
 
   return (
@@ -185,53 +198,54 @@ function EditModal({ event, onClose, onSaved }) {
       onClick={onClose}
       style={{
         position: "fixed", inset: 0, zIndex: 1500,
-        background: "rgba(15,23,42,0.6)",
-        backdropFilter: "blur(10px)",
+        background: "rgba(0, 0, 0, 0.5)",
+        backdropFilter: "blur(4px)",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: 24,
-        animation: "overlayIn 0.22s ease both",
+        animation: "fadeIn 0.2s ease",
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
           background: "white", borderRadius: 24,
-          width: "100%", maxWidth: 620,
-          maxHeight: "88vh", display: "flex", flexDirection: "column",
-          boxShadow: "0 48px 120px rgba(0,0,0,0.3)",
-          animation: "modalIn 0.32s cubic-bezier(0.22,1.2,0.36,1) both",
-          fontFamily: "'Outfit', sans-serif",
+          width: "100%", maxWidth: 680,
+          maxHeight: "90vh", display: "flex", flexDirection: "column",
+          boxShadow: "0 24px 48px rgba(0,0,0,0.2)",
+          fontFamily: "'Inter', sans-serif",
           overflow: "hidden",
+          animation: "scaleIn 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1)",
         }}
       >
-        {/* Header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", flexShrink: 0,
-          background: `linear-gradient(135deg, ${colors.bg}, white)`,
+          padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
+          background: "white",
         }}>
           <div>
-            <p style={{ margin: 0, fontSize: 10, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              Editing Event
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: colors.accent, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+              Edit Event
             </p>
-            <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800, color: "#0f172a", margin: "3px 0 0" }}>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: "#111827", margin: "4px 0 0" }}>
               {event.title}
             </h2>
           </div>
           <button
             onClick={onClose}
             style={{
-              width: 32, height: 32, borderRadius: 10,
-              border: "1.5px solid #e2e8f0", background: "#f8fafc",
-              color: "#64748b", fontSize: 14, cursor: "pointer",
+              width: 32, height: 32, borderRadius: 8,
+              border: "1px solid #e5e7eb", background: "white",
+              color: "#6b7280", fontSize: 16, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 0.2s",
             }}
+            onMouseOver={e => { e.currentTarget.style.background = "#f9fafb"; e.currentTarget.style.borderColor = "#d1d5db"; }}
+            onMouseOut={e => { e.currentTarget.style.background = "white"; e.currentTarget.style.borderColor = "#e5e7eb"; }}
           >✕</button>
         </div>
 
-        {/* Scrollable form */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", scrollbarWidth: "thin" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div style={{ gridColumn: "1 / -1" }}>
               <label style={labelStyle}>Title</label>
               <input style={inputStyle} value={form.title} onChange={handle("title")} />
@@ -243,7 +257,7 @@ function EditModal({ event, onClose, onSaved }) {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Organizer Name</label>
+              <label style={labelStyle}>Organizer</label>
               <input style={inputStyle} value={form.organizerName} onChange={handle("organizerName")} />
             </div>
             <div>
@@ -289,34 +303,32 @@ function EditModal({ event, onClose, onSaved }) {
           </div>
         </div>
 
-        {/* Footer */}
         <div style={{
-          padding: "14px 24px", borderTop: "1px solid #f1f5f9",
-          display: "flex", gap: 10, flexShrink: 0, background: "white",
+          padding: "16px 24px", borderTop: "1px solid #f3f4f6",
+          display: "flex", gap: 12, background: "white",
         }}>
           <button
             onClick={onClose}
             style={{
-              flex: 1, padding: "11px 0", borderRadius: 12,
-              border: "1.5px solid #e2e8f0", background: "#f8fafc",
-              fontSize: 13, fontWeight: 700, color: "#475569",
-              cursor: "pointer", fontFamily: "'Outfit', sans-serif",
+              flex: 1, padding: "10px 0", borderRadius: 10,
+              border: "1px solid #e5e7eb", background: "white",
+              fontSize: 13, fontWeight: 500, color: "#374151",
+              cursor: "pointer", transition: "all 0.2s",
             }}
           >Cancel</button>
           <button
             onClick={handleSubmit}
             disabled={saving}
             style={{
-              flex: 2, padding: "11px 0", borderRadius: 12,
-              border: `1.5px solid ${colors.light}`,
-              background: saving ? colors.light : colors.bg,
-              fontSize: 13, fontWeight: 700, color: colors.accent,
+              flex: 2, padding: "10px 0", borderRadius: 10,
+              border: "none", background: colors.accent,
+              fontSize: 13, fontWeight: 500, color: "white",
               cursor: saving ? "not-allowed" : "pointer",
-              fontFamily: "'Outfit', sans-serif",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              transition: "all 0.2s",
+              opacity: saving ? 0.6 : 1,
             }}
           >
-            {saving ? "Saving…" : "✔ Save Changes"}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
@@ -344,196 +356,137 @@ function EventCard({ event, onClick, onDelete, onEdit, isAllEvents }) {
     <div
       onClick={() => onClick(event)}
       style={{
-        background: "#fff",
-        borderRadius: 20,
-        border: "1.5px solid #eef0f6",
+        background: "white",
+        borderRadius: 16,
+        border: "1px solid #e5e7eb",
         overflow: "hidden",
         cursor: "pointer",
-        transition: "transform 0.22s, box-shadow 0.22s, border-color 0.22s",
+        transition: "all 0.2s ease",
         display: "flex",
         flexDirection: "column",
-        fontFamily: "'Outfit', sans-serif",
+        fontFamily: "'Inter', sans-serif",
         position: "relative",
       }}
-      onMouseOver={e => {
-        e.currentTarget.style.transform = "translateY(-5px)";
-        e.currentTarget.style.boxShadow = `0 20px 50px rgba(0,0,0,0.10), 0 0 0 2px ${colors.accent}33`;
-        e.currentTarget.style.borderColor = colors.accent + "55";
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = "translateY(-4px)";
+        e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)";
+        e.currentTarget.style.borderColor = colors.accent;
       }}
-      onMouseOut={e => {
+      onMouseLeave={e => {
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
-        e.currentTarget.style.borderColor = "#eef0f6";
+        e.currentTarget.style.borderColor = "#e5e7eb";
       }}
     >
-      {/* ── Banner ── */}
-      <div style={{ height: 130, position: "relative", overflow: "hidden", flexShrink: 0 }}>
+      <div style={{ height: 140, position: "relative", overflow: "hidden", flexShrink: 0, background: colors.dark }}>
         {banner ? (
-          <img src={banner} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <img src={banner} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{
             width: "100%", height: "100%",
-            background: `linear-gradient(135deg, ${colors.dark}cc, ${colors.accent}99)`,
+            background: `linear-gradient(135deg, ${colors.dark}, ${colors.accent})`,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <span style={{ fontSize: 52, opacity: 0.45 }}>{catEmoji[event.category] || "📌"}</span>
+            <span style={{ fontSize: 48, opacity: 0.3 }}>{catEmoji[event.category] || "📌"}</span>
           </div>
         )}
-
-        {/* Dark scrim */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.12) 55%, transparent 100%)" }} />
-
-        {/* Status pill — top right */}
         <div style={{
-          position: "absolute", top: 10, right: 10,
-          display: "flex", alignItems: "center", gap: 5,
+          position: "absolute", inset: 0,
+          background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)",
+        }} />
+
+        <div style={{
+          position: "absolute", top: 12, right: 12,
           background: sc.bg, border: `1px solid ${sc.border}`,
-          borderRadius: 30, padding: "3px 9px",
-          backdropFilter: "blur(6px)",
+          borderRadius: 20, padding: "4px 10px",
+          backdropFilter: "blur(4px)",
         }}>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: sc.color, boxShadow: `0 0 5px ${sc.color}` }} />
-          <span style={{ fontSize: 9, fontWeight: 700, color: sc.color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{event.status}</span>
+          <span style={{ fontSize: 10, fontWeight: 600, color: sc.color, textTransform: "uppercase" }}>{event.status}</span>
         </div>
 
-        {/* Category pill — top left */}
         <div style={{
-          position: "absolute", top: 10, left: 10,
-          background: "rgba(0,0,0,0.45)", backdropFilter: "blur(6px)",
-          border: "1px solid rgba(255,255,255,0.18)",
-          borderRadius: 30, padding: "3px 9px",
-          display: "flex", alignItems: "center", gap: 5,
+          position: "absolute", top: 12, left: 12,
+          background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+          borderRadius: 20, padding: "4px 10px",
         }}>
-          <span style={{ fontSize: 11 }}>{catEmoji[event.category] || "📌"}</span>
-          <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.06em" }}>{event.category}</span>
+          <span style={{ fontSize: 10, fontWeight: 500, color: "white" }}>{catEmoji[event.category]} {event.category}</span>
         </div>
 
-        {/* Title + meta overlaid on banner bottom */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 13px 11px" }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px" }}>
           <h3 style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 14, fontWeight: 800,
-            color: "#fff", margin: "0 0 5px", lineHeight: 1.25,
-            letterSpacing: "-0.01em",
-            textShadow: "0 1px 8px rgba(0,0,0,0.55)",
-            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+            fontSize: 16, fontWeight: 600, color: "white",
+            margin: "0 0 6px", lineHeight: 1.3,
+            textShadow: "0 1px 2px rgba(0,0,0,0.2)",
           }}>{event.title}</h3>
-          <div style={{ display: "flex", gap: 10 }}>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.75)", fontWeight: 500 }}>📅 {event.date}</span>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>
+            📅 {event.date}
           </div>
         </div>
       </div>
 
-      {/* ── Body ── */}
-      <div style={{ padding: "11px 13px 0", flex: 1 }}>
-        {/* Location */}
-        <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 10 }}>
-          <span style={{ fontSize: 11 }}>📍</span>
-          <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.location}</span>
+      <div style={{ padding: "12px 16px", flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+          <span style={{ fontSize: 12 }}>📍</span>
+          <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 500 }}>{event.location}</span>
         </div>
 
-        {/* Volunteer progress bar */}
         {event.capacity > 0 && (
-          <div style={{
-            padding: "9px 11px 10px",
-            background: "#f8fafc",
-            borderRadius: 11,
-            border: "1px solid #f1f5f9",
-          }}>
-            {/* Row: label + count + badge */}
+          <div style={{ marginTop: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontSize: 11 }}>🙋</span>
-                <span style={{ fontSize: 9, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.07em", textTransform: "uppercase" }}>Volunteers</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
-                <span style={{ fontSize: 15, fontWeight: 900, color: fillColor, fontFamily: "'Syne', sans-serif", lineHeight: 1 }}>{event.volunteers}</span>
-                <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>/{event.capacity}</span>
-                <span style={{
-                  marginLeft: 5, fontSize: 9, fontWeight: 800,
-                  color: fillColor,
-                  background: fillColor + "1a",
-                  border: `1px solid ${fillColor}33`,
-                  padding: "1px 6px", borderRadius: 5,
-                }}>{pct}%</span>
-              </div>
+              <span style={{ fontSize: 11, fontWeight: 500, color: "#6b7280" }}>Volunteers</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: fillColor }}>
+                {event.volunteers}/{event.capacity} ({pct}%)
+              </span>
             </div>
-
-            {/* Progress track */}
-            <div style={{ position: "relative", height: 5, background: "#e2e8f0", borderRadius: 99, overflow: "hidden" }}>
+            <div style={{ height: 6, background: "#f3f4f6", borderRadius: 3, overflow: "hidden" }}>
               <div style={{
-                position: "absolute", left: 0, top: 0, bottom: 0,
-                width: `${pct}%`,
-                background: `linear-gradient(90deg, ${fillColor}bb, ${fillColor})`,
-                borderRadius: 99,
-                transition: "width 0.7s cubic-bezier(0.34,1.56,0.64,1)",
-                boxShadow: pct > 0 ? `0 0 6px ${fillColor}55` : "none",
+                width: `${pct}%`, height: "100%",
+                background: fillColor,
+                borderRadius: 3,
+                transition: "width 0.3s ease",
               }} />
-              {/* Tick marks at 25/50/75 */}
-              {[25, 50, 75].map(p => (
-                <div key={p} style={{
-                  position: "absolute", left: `${p}%`, top: 0, bottom: 0,
-                  width: 1.5, background: "#fff", opacity: 0.85,
-                }} />
-              ))}
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Footer buttons ── */}
-      <div style={{ display: "flex", gap: 7, padding: "10px 13px 13px", marginTop: 8 }}>
+      <div style={{ display: "flex", gap: 8, padding: "12px 16px 16px", borderTop: "1px solid #f3f4f6" }}>
         {isAllEvents ? (
           <button
             onClick={e => { e.stopPropagation(); onClick(event); }}
             style={{
-              flex: 1, padding: "7px 0", borderRadius: 9,
-              border: `1.5px solid ${colors.light}`,
+              flex: 1, padding: "8px 0", borderRadius: 8,
+              border: `1px solid ${colors.light}`,
               background: colors.bg,
-              fontSize: 11, fontWeight: 700, color: colors.accent,
-              cursor: "pointer", fontFamily: "'Outfit', sans-serif",
-              transition: "background 0.15s",
+              fontSize: 12, fontWeight: 500, color: colors.accent,
+              cursor: "pointer", transition: "all 0.2s",
             }}
-            onMouseOver={e => e.currentTarget.style.background = colors.light}
-            onMouseOut={e => e.currentTarget.style.background = colors.bg}
-          >👁️ View Details</button>
+          >View Details</button>
         ) : (
           <>
             <button
               onClick={e => { e.stopPropagation(); if (!completed) onEdit(event); }}
               disabled={completed}
-              title={completed ? "Cannot edit completed events" : "Edit"}
               style={{
-                flex: 1, padding: "7px 0", borderRadius: 9,
-                border: "1.5px solid #e2e8f0",
-                background: completed ? "#f1f5f9" : "#f8fafc",
-                fontSize: 11, fontWeight: 700,
-                color: completed ? "#cbd5e1" : "#475569",
+                flex: 1, padding: "8px 0", borderRadius: 8,
+                border: "1px solid #e5e7eb", background: completed ? "#f9fafb" : "white",
+                fontSize: 12, fontWeight: 500, color: completed ? "#9ca3af" : "#374151",
                 cursor: completed ? "not-allowed" : "pointer",
-                fontFamily: "'Outfit', sans-serif",
-                transition: "background 0.15s",
-                opacity: completed ? 0.55 : 1,
+                transition: "all 0.2s",
               }}
-              onMouseOver={e => { if (!completed) e.currentTarget.style.background = "#f1f5f9"; }}
-              onMouseOut={e => { if (!completed) e.currentTarget.style.background = "#f8fafc"; }}
-            >✏️ Edit</button>
+            >Edit</button>
             <button
               onClick={e => { e.stopPropagation(); if (!completed) onDelete(event.id, null); }}
               disabled={completed}
-              title={completed ? "Cannot delete completed events" : "Delete"}
               style={{
-                flex: 1, padding: "7px 0", borderRadius: 9,
-                border: completed ? "1.5px solid #e2e8f0" : "1.5px solid #fecaca",
-                background: completed ? "#f1f5f9" : "#fff1f2",
-                fontSize: 11, fontWeight: 700,
-                color: completed ? "#cbd5e1" : "#e11d48",
+                flex: 1, padding: "8px 0", borderRadius: 8,
+                border: completed ? "1px solid #e5e7eb" : "1px solid #fecaca",
+                background: completed ? "#f9fafb" : "#fef2f2",
+                fontSize: 12, fontWeight: 500, color: completed ? "#9ca3af" : "#dc2626",
                 cursor: completed ? "not-allowed" : "pointer",
-                fontFamily: "'Outfit', sans-serif",
-                transition: "background 0.15s",
-                opacity: completed ? 0.55 : 1,
+                transition: "all 0.2s",
               }}
-              onMouseOver={e => { if (!completed) e.currentTarget.style.background = "#ffe4e6"; }}
-              onMouseOut={e => { if (!completed) e.currentTarget.style.background = "#fff1f2"; }}
-            >🗑️ Delete</button>
+            >Delete</button>
           </>
         )}
       </div>
@@ -557,7 +510,7 @@ function EventModal({ event, onClose, onDelete, onEdit, isAllEvents, onVolunteer
       setLoadingVolunteers(true);
       const data = await getEventVolunteers(event.id);
       setVolunteers(data);
-      onVolunteerCountLoaded?.(event.id, data.length);  // ← only this line added
+      onVolunteerCountLoaded?.(event.id, data.length);
     } catch (err) {
       console.error("Error loading volunteers", err);
     } finally {
@@ -580,37 +533,23 @@ function EventModal({ event, onClose, onDelete, onEdit, isAllEvents, onVolunteer
     pct >= 60 ? "#f59e0b" :
                 colors.accent;
 
-  // Avatar color cycling for variety
-  const avatarPalettes = [
-    { bg: "#eff6ff", border: "#bfdbfe", text: "#2563eb" },
-    { bg: "#f0fdf4", border: "#bbf7d0", text: "#16a34a" },
-    { bg: "#fdf4ff", border: "#e9d5ff", text: "#9333ea" },
-    { bg: "#fff7ed", border: "#fed7aa", text: "#ea580c" },
-    { bg: "#f0fdfa", border: "#99f6e4", text: "#0d9488" },
-    { bg: "#fef2f2", border: "#fecaca", text: "#dc2626" },
-  ];
-
   return (
     <div
       onClick={onClose}
       style={{
         position: "fixed", inset: 0, zIndex: 1000,
-        background: "rgba(10,16,30,0.68)",
-        backdropFilter: "blur(14px)",
+        background: "rgba(0, 0, 0, 0.6)",
+        backdropFilter: "blur(8px)",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: 24,
-        animation: "overlayIn 0.2s ease both",
-        fontFamily: "'Outfit', sans-serif",
+        animation: "fadeIn 0.2s ease",
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       <style>{`
-        @keyframes overlayIn { from { opacity:0 } to { opacity:1 } }
-        @keyframes modalIn   { from { opacity:0; transform:scale(0.93) translateY(18px) } to { opacity:1; transform:none } }
-        .em-tab-btn { border:none; background:transparent; cursor:pointer; font-family:'Outfit',sans-serif; transition:all 0.18s; outline:none; }
-        .em-vol-row:hover { background:#f1f5f9 !important; }
-        .em-scroll::-webkit-scrollbar { width:4px; }
-        .em-scroll::-webkit-scrollbar-track { background:transparent; }
-        .em-scroll::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:99px; }
+        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95) } to { opacity: 1; transform: scale(1) } }
+        @keyframes toastSlideIn { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
       `}</style>
 
       <div
@@ -618,203 +557,143 @@ function EventModal({ event, onClose, onDelete, onEdit, isAllEvents, onVolunteer
         style={{
           display: "flex",
           width: "100%",
-          maxWidth: 900,
-          height: "min(86vh, 630px)",
-          borderRadius: 26,
+          maxWidth: 1000,
+          height: "min(85vh, 700px)",
+          borderRadius: 24,
           overflow: "hidden",
-          boxShadow: "0 60px 140px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08)",
-          animation: "modalIn 0.32s cubic-bezier(0.22,1.2,0.36,1) both",
+          boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
+          animation: "scaleIn 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1)",
         }}
       >
-
-        {/* ── LEFT PANEL ── */}
-        <div style={{ width: "40%", flexShrink: 0, position: "relative", overflow: "hidden" }}>
+        <div style={{ width: "38%", flexShrink: 0, position: "relative", overflow: "hidden" }}>
           {banner ? (
-            <img src={banner} alt="Event banner" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            <img src={banner} alt="Event banner" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
             <div style={{
               width: "100%", height: "100%",
-              background: `linear-gradient(155deg, ${colors.dark} 0%, ${colors.accent} 70%, ${colors.light} 130%)`,
+              background: `linear-gradient(135deg, ${colors.dark}, ${colors.accent})`,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <span style={{ fontSize: 100, opacity: 0.28 }}>{catEmoji[event.category] || "📌"}</span>
+              <span style={{ fontSize: 80, opacity: 0.3 }}>{catEmoji[event.category] || "📌"}</span>
             </div>
           )}
-
-          {/* Gradient scrim */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.38) 50%, rgba(0,0,0,0.06) 100%)" }} />
-
-          {/* Category pill */}
           <div style={{
-            position: "absolute", top: 18, left: 18,
-            display: "flex", alignItems: "center", gap: 6,
-            background: "rgba(0,0,0,0.48)", backdropFilter: "blur(8px)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            borderRadius: 30, padding: "5px 12px",
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)",
+          }} />
+
+          <div style={{
+            position: "absolute", top: 20, left: 20,
+            background: sc.bg, border: `1px solid ${sc.border}`,
+            borderRadius: 20, padding: "6px 12px",
           }}>
-            <span style={{ fontSize: 13 }}>{catEmoji[event.category] || "📌"}</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.04em" }}>{event.category}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: sc.color }}>{event.status}</span>
           </div>
 
-          {/* Bottom text + progress */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 22px 26px" }}>
-            {/* Status */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px" }}>
             <div style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: sc.bg, border: `1px solid ${sc.border}`,
-              borderRadius: 20, padding: "4px 10px", marginBottom: 11,
+              display: "inline-block",
+              background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+              borderRadius: 20, padding: "4px 12px", marginBottom: 12,
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: sc.color, boxShadow: `0 0 6px ${sc.color}` }} />
-              <span style={{ fontSize: 10, fontWeight: 700, color: sc.color, letterSpacing: "0.1em", textTransform: "uppercase" }}>{event.status}</span>
+              <span style={{ fontSize: 11, fontWeight: 500, color: "white" }}>{catEmoji[event.category]} {event.category}</span>
             </div>
-
             <h2 style={{
-              fontFamily: "'Syne', sans-serif",
-              fontSize: 21, fontWeight: 800,
-              color: "#fff", margin: "0 0 5px",
-              lineHeight: 1.22, letterSpacing: "-0.02em",
-              textShadow: "0 2px 18px rgba(0,0,0,0.7)",
+              fontSize: 24, fontWeight: 700, color: "white",
+              margin: "0 0 8px", lineHeight: 1.3,
+              textShadow: "0 2px 4px rgba(0,0,0,0.2)",
             }}>{event.title}</h2>
-
             {event.organizerName && (
-              <p style={{ margin: "0 0 14px", fontSize: 12, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>
-                by {event.organizerName}
+              <p style={{ margin: "0 0 16px", fontSize: 13, color: "rgba(255,255,255,0.7)" }}>
+                Organized by {event.organizerName}
               </p>
             )}
-
-            {/* Volunteer progress — always visible on left panel */}
             {event.capacity > 0 && (
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    🙋 Volunteers
-                  </span>
-                  <span style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
-                    <span style={{ fontSize: 14, fontWeight: 900, color: "#fff", fontFamily: "'Syne', sans-serif" }}>{event.volunteers}</span>
-                    <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>/{event.capacity}</span>
-                    <span style={{
-                      marginLeft: 6, fontSize: 9, fontWeight: 800,
-                      color: fillColor, background: fillColor + "28",
-                      border: `1px solid ${fillColor}44`,
-                      padding: "1px 7px", borderRadius: 5,
-                    }}>{pct}%</span>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>Volunteers</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "white" }}>
+                    {event.volunteers}/{event.capacity} ({pct}%)
                   </span>
                 </div>
-
-                <div style={{ position: "relative", height: 7, background: "rgba(255,255,255,0.15)", borderRadius: 99, overflow: "hidden" }}>
+                <div style={{ height: 8, background: "rgba(255,255,255,0.2)", borderRadius: 4, overflow: "hidden" }}>
                   <div style={{
-                    position: "absolute", left: 0, top: 0, bottom: 0,
-                    width: `${pct}%`,
-                    background: `linear-gradient(90deg, ${fillColor}cc, ${fillColor})`,
-                    borderRadius: 99,
-                    boxShadow: `0 0 10px ${fillColor}66`,
-                    transition: "width 0.9s cubic-bezier(0.34,1.56,0.64,1)",
+                    width: `${pct}%`, height: "100%",
+                    background: fillColor,
+                    borderRadius: 4,
                   }} />
-                  {[25, 50, 75].map(p => (
-                    <div key={p} style={{
-                      position: "absolute", left: `${p}%`, top: 0, bottom: 0,
-                      width: 1.5, background: "rgba(255,255,255,0.45)",
-                    }} />
-                  ))}
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
-        <div style={{ flex: 1, background: "#fff", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-
-          {/* Tab header */}
-          <div style={{ borderBottom: "1.5px solid #f1f5f9", flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 22px 0" }}>
-              <div style={{ display: "flex", gap: 2 }}>
-                {[
-                  { key: "details",    label: "📋 Details" },
-                  { key: "volunteers", label: `🙋 Volunteers${volunteers.length ? ` (${volunteers.length})` : ""}` },
-                ].map(tab => (
-                  <button
-                    key={tab.key}
-                    className="em-tab-btn"
-                    onClick={() => setActiveTab(tab.key)}
-                    style={{
-                      padding: "7px 15px 11px",
-                      fontSize: 12, fontWeight: 700,
-                      color: activeTab === tab.key ? colors.accent : "#94a3b8",
-                      borderBottom: activeTab === tab.key ? `2.5px solid ${colors.accent}` : "2.5px solid transparent",
-                      marginBottom: -1.5,
-                      letterSpacing: "0.01em",
-                    }}
-                  >{tab.label}</button>
-                ))}
+        <div style={{ flex: 1, background: "white", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px" }}>
+              <div style={{ display: "flex", gap: 4 }}>
+                <button
+                  onClick={() => setActiveTab("details")}
+                  style={{
+                    padding: "8px 16px", borderRadius: 8,
+                    border: "none", background: activeTab === "details" ? colors.bg : "transparent",
+                    fontSize: 13, fontWeight: 500, color: activeTab === "details" ? colors.accent : "#6b7280",
+                    cursor: "pointer", transition: "all 0.2s",
+                  }}
+                >Details</button>
+                <button
+                  onClick={() => setActiveTab("volunteers")}
+                  style={{
+                    padding: "8px 16px", borderRadius: 8,
+                    border: "none", background: activeTab === "volunteers" ? colors.bg : "transparent",
+                    fontSize: 13, fontWeight: 500, color: activeTab === "volunteers" ? colors.accent : "#6b7280",
+                    cursor: "pointer", transition: "all 0.2s",
+                  }}
+                >Volunteers {volunteers.length > 0 && `(${volunteers.length})`}</button>
               </div>
               <button
                 onClick={onClose}
                 style={{
-                  width: 30, height: 30, borderRadius: 9,
-                  border: "1.5px solid #e2e8f0", background: "#f8fafc",
-                  color: "#64748b", fontSize: 13, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.15s", flexShrink: 0,
+                  width: 32, height: 32, borderRadius: 8,
+                  border: "1px solid #e5e7eb", background: "white",
+                  color: "#6b7280", fontSize: 16, cursor: "pointer",
+                  transition: "all 0.2s",
                 }}
-                onMouseOver={e => { e.currentTarget.style.background = "#f1f5f9"; e.currentTarget.style.borderColor = "#cbd5e1"; }}
-                onMouseOut={e => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#e2e8f0"; }}
               >✕</button>
             </div>
           </div>
 
-          {/* Scrollable tab content */}
-          <div className="em-scroll" style={{ flex: 1, overflowY: "auto", padding: "16px 22px" }}>
-
-            {/* ── DETAILS TAB ── */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
             {activeTab === "details" && (
               <>
-                <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>
-                  {[
-                    { icon: "📅", label: "Date & Time",  value: event.date },
-                    { icon: "📍", label: "Location",     value: event.location },
-                    { icon: "🏛️", label: "Venue",        value: event.venue },
-                    { icon: "🏙️", label: "City / State", value: [event.city, event.state].filter(Boolean).join(", ") },
-                    { icon: "✉️", label: "Email",        value: event.contactEmail },
-                    { icon: "📞", label: "Phone",        value: event.contactPhone },
-                  ].filter(r => r.value).map((row, i) => (
-                    <div key={row.label} style={{
-                      display: "flex", alignItems: "center", gap: 11,
-                      padding: "8px 10px", borderRadius: 10,
-                      background: i % 2 === 0 ? "#f8fafc" : "transparent",
-                    }}>
-                      <span style={{
-                        width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-                        background: colors.bg, border: `1px solid ${colors.light}`,
-                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13,
-                      }}>{row.icon}</span>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.1em", textTransform: "uppercase" }}>{row.label}</p>
-                        <p style={{ margin: "2px 0 0", fontSize: 12, color: "#334155", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.value}</p>
-                      </div>
-                    </div>
-                  ))}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+                  <InfoRow icon="📅" label="Date & Time" value={event.date} colors={colors} />
+                  <InfoRow icon="📍" label="Location" value={event.location} colors={colors} />
+                  {event.venue && <InfoRow icon="🏛️" label="Venue" value={event.venue} colors={colors} />}
+                  {event.city && event.state && <InfoRow icon="🏙️" label="City/State" value={`${event.city}, ${event.state}`} colors={colors} />}
+                  {event.contactEmail && <InfoRow icon="✉️" label="Email" value={event.contactEmail} colors={colors} />}
+                  {event.contactPhone && <InfoRow icon="📞" label="Phone" value={event.contactPhone} colors={colors} />}
                 </div>
 
                 {event.description && (
-                  <div style={{ marginBottom: 13 }}>
-                    <p style={{ margin: "0 0 6px", fontSize: 9, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.1em", textTransform: "uppercase" }}>About</p>
-                    <p style={{ margin: 0, fontSize: 12, color: "#475569", lineHeight: 1.75, background: "#f8fafc", borderRadius: 11, padding: "12px 13px", border: "1px solid #f1f5f9" }}>{event.description}</p>
+                  <div style={{ marginBottom: 20 }}>
+                    <h4 style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>About</h4>
+                    <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.6, margin: 0 }}>{event.description}</p>
                   </div>
                 )}
 
                 {(event.requirements || event.benefits) && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                     {event.requirements && (
-                      <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 11, padding: "11px 13px" }}>
-                        <p style={{ margin: "0 0 5px", fontSize: 9, fontWeight: 700, color: "#92400e", letterSpacing: "0.1em", textTransform: "uppercase" }}>⚠️ Requirements</p>
-                        <p style={{ margin: 0, fontSize: 11, color: "#78350f", lineHeight: 1.6 }}>{event.requirements}</p>
+                      <div style={{ background: "#fffbeb", borderRadius: 12, padding: "12px 16px", borderLeft: `3px solid #f59e0b` }}>
+                        <h4 style={{ fontSize: 11, fontWeight: 600, color: "#92400e", margin: "0 0 6px", textTransform: "uppercase" }}>Requirements</h4>
+                        <p style={{ fontSize: 12, color: "#78350f", margin: 0 }}>{event.requirements}</p>
                       </div>
                     )}
                     {event.benefits && (
-                      <div style={{ background: colors.bg, border: `1.5px solid ${colors.light}`, borderRadius: 11, padding: "11px 13px" }}>
-                        <p style={{ margin: "0 0 5px", fontSize: 9, fontWeight: 700, color: colors.dark, letterSpacing: "0.1em", textTransform: "uppercase" }}>✨ Benefits</p>
-                        <p style={{ margin: 0, fontSize: 11, color: colors.dark, lineHeight: 1.6 }}>{event.benefits}</p>
+                      <div style={{ background: colors.bg, borderRadius: 12, padding: "12px 16px", borderLeft: `3px solid ${colors.accent}` }}>
+                        <h4 style={{ fontSize: 11, fontWeight: 600, color: colors.dark, margin: "0 0 6px", textTransform: "uppercase" }}>Benefits</h4>
+                        <p style={{ fontSize: 12, color: colors.dark, margin: 0 }}>{event.benefits}</p>
                       </div>
                     )}
                   </div>
@@ -822,176 +701,95 @@ function EventModal({ event, onClose, onDelete, onEdit, isAllEvents, onVolunteer
               </>
             )}
 
-            {/* ── VOLUNTEERS TAB ── */}
             {activeTab === "volunteers" && (
               <>
-                {/* Capacity summary card */}
-                {event.capacity > 0 && (
-                  <div style={{
-                    background: `linear-gradient(135deg, ${colors.bg}, #fff)`,
-                    border: `1.5px solid ${colors.light}`,
-                    borderRadius: 14, padding: "13px 15px", marginBottom: 14,
-                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
-                  }}>
-                    <div>
-                      <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.1em", textTransform: "uppercase" }}>Capacity Filled</p>
-                      <p style={{ margin: "3px 0 0", fontSize: 26, fontWeight: 900, color: fillColor, fontFamily: "'Syne', sans-serif", lineHeight: 1 }}>
-                        {event.volunteers}
-                        <span style={{ fontSize: 14, fontWeight: 500, color: "#94a3b8", marginLeft: 4 }}>/ {event.capacity}</span>
-                      </p>
-                    </div>
-                    <div style={{ flex: 1, maxWidth: 150 }}>
-                      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 5 }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: fillColor }}>{pct}%</span>
-                      </div>
-                      <div style={{ height: 8, background: colors.light, borderRadius: 99, overflow: "hidden", position: "relative" }}>
-                        <div style={{
-                          height: "100%", width: `${pct}%`,
-                          background: `linear-gradient(90deg, ${fillColor}99, ${fillColor})`,
-                          borderRadius: 99,
-                          boxShadow: `0 0 8px ${fillColor}55`,
-                        }} />
-                        {[25, 50, 75].map(p => (
-                          <div key={p} style={{ position: "absolute", left: `${p}%`, top: 0, bottom: 0, width: 1.5, background: "#fff" }} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Volunteer list */}
                 {loadingVolunteers ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-                    {[1, 2, 3].map(i => (
-                      <div key={i} style={{ height: 58, borderRadius: 12, background: "#f1f5f9" }} />
-                    ))}
+                  <div style={{ textAlign: "center", padding: "40px" }}>
+                    <div style={{ width: 32, height: 32, border: "2px solid #e5e7eb", borderTopColor: colors.accent, borderRadius: "50%", animation: "spin 0.6s linear infinite", margin: "0 auto 12px" }} />
+                    <p style={{ fontSize: 13, color: "#6b7280" }}>Loading volunteers...</p>
                   </div>
                 ) : volunteers.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "42px 0" }}>
-                    <div style={{ fontSize: 42, marginBottom: 10 }}>🙋</div>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#94a3b8" }}>No volunteers yet</p>
-                    <p style={{ margin: "5px 0 0", fontSize: 12, color: "#cbd5e1" }}>Registrations will appear here</p>
+                  <div style={{ textAlign: "center", padding: "48px 20px" }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🙋</div>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: "#374151", margin: 0 }}>No volunteers yet</p>
+                    <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>Registrations will appear here</p>
                   </div>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                    {volunteers.map((v, idx) => {
-                      const pal = avatarPalettes[idx % avatarPalettes.length];
-                      return (
-                        <div
-                          key={v.id}
-                          className="em-vol-row"
-                          style={{
-                            display: "flex", alignItems: "center",
-                            gap: 12, padding: "10px 13px",
-                            borderRadius: 12,
-                            background: "#f8fafc",
-                            border: "1px solid #eef0f6",
-                            transition: "background 0.15s",
-                          }}
-                        >
-                          {/* Avatar */}
-                          <div style={{
-                            width: 36, height: 36, borderRadius: "50%",
-                            background: pal.bg,
-                            border: `2px solid ${pal.border}`,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 14, fontWeight: 800, color: pal.text,
-                            flexShrink: 0,
-                          }}>
-                            {v.user?.name?.charAt(0)?.toUpperCase() || "?"}
-                          </div>
-
-                          {/* Name + meta */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                              {v.user?.name || "Anonymous"}
-                            </p>
-                            {(v.skills || v.availability) && (
-                              <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {[v.skills, v.availability].filter(Boolean).join(" · ")}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* No status badge — all volunteers are accepted */}
-                          <span style={{
-                            fontSize: 10, fontWeight: 700,
-                            color: "#059669",
-                            background: "#ecfdf5",
-                            border: "1px solid #a7f3d0",
-                            padding: "3px 9px", borderRadius: 7,
-                            letterSpacing: "0.04em",
-                            flexShrink: 0,
-                          }}>✓ Registered</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {volunteers.map((v, idx) => (
+                      <div key={v.id} style={{
+                        display: "flex", alignItems: "center", gap: 12,
+                        padding: "12px", borderRadius: 12,
+                        background: "#f9fafb", border: "1px solid #f3f4f6",
+                      }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: "50%",
+                          background: colors.bg, border: `2px solid ${colors.light}`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 14, fontWeight: 600, color: colors.accent,
+                        }}>
+                          {v.user?.name?.charAt(0)?.toUpperCase() || "?"}
                         </div>
-                      );
-                    })}
+                        <div style={{ flex: 1 }}>
+                          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#111827" }}>
+                            {v.user?.name || "Anonymous Volunteer"}
+                          </p>
+                          {(v.skills || v.availability) && (
+                            <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280" }}>
+                              {[v.skills, v.availability].filter(Boolean).join(" · ")}
+                            </p>
+                          )}
+                        </div>
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, color: "#059669",
+                          background: "#ecfdf5", padding: "4px 8px", borderRadius: 6,
+                        }}>Registered</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </>
             )}
           </div>
 
-          {/* Footer actions */}
           <div style={{
-            padding: "12px 22px 16px",
-            borderTop: "1.5px solid #f1f5f9",
-            display: "flex", gap: 10, flexShrink: 0,
-            background: "#fff",
+            padding: "16px 24px", borderTop: "1px solid #f3f4f6",
+            display: "flex", gap: 12, background: "white",
           }}>
             {isAllEvents ? (
               <button
                 onClick={onClose}
                 style={{
-                  flex: 1, padding: "10px 0", borderRadius: 11,
-                  border: "1.5px solid #e2e8f0", background: "#f8fafc",
-                  fontSize: 13, fontWeight: 700, color: "#475569",
-                  cursor: "pointer", fontFamily: "'Outfit', sans-serif",
-                  transition: "all 0.15s",
+                  flex: 1, padding: "10px 0", borderRadius: 10,
+                  border: "1px solid #e5e7eb", background: "white",
+                  fontSize: 13, fontWeight: 500, color: "#374151",
+                  cursor: "pointer",
                 }}
-                onMouseOver={e => e.currentTarget.style.background = "#f1f5f9"}
-                onMouseOut={e => e.currentTarget.style.background = "#f8fafc"}
-              >👁️ Viewing Only</button>
+              >Close</button>
             ) : (
               <>
                 <button
                   onClick={() => !completed && onEdit(event)}
                   disabled={completed}
-                  title={completed ? "Cannot edit completed events" : "Edit event"}
                   style={{
-                    flex: 1, padding: "10px 0", borderRadius: 11,
-                    border: completed ? "1.5px solid #e2e8f0" : `1.5px solid ${colors.light}`,
-                    background: completed ? "#f8fafc" : colors.bg,
-                    fontSize: 13, fontWeight: 700,
-                    color: completed ? "#cbd5e1" : colors.accent,
+                    flex: 1, padding: "10px 0", borderRadius: 10,
+                    border: completed ? "1px solid #e5e7eb" : `1px solid ${colors.light}`,
+                    background: completed ? "#f9fafb" : colors.bg,
+                    fontSize: 13, fontWeight: 500, color: completed ? "#9ca3af" : colors.accent,
                     cursor: completed ? "not-allowed" : "pointer",
-                    fontFamily: "'Outfit', sans-serif",
-                    transition: "all 0.15s",
-                    opacity: completed ? 0.6 : 1,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                   }}
-                  onMouseOver={e => { if (!completed) e.currentTarget.style.background = colors.light; }}
-                  onMouseOut={e => { if (!completed) e.currentTarget.style.background = colors.bg; }}
-                >✏️ Edit Event</button>
+                >Edit Event</button>
                 <button
                   onClick={() => !completed && onDelete(event.id, onClose)}
                   disabled={completed}
-                  title={completed ? "Cannot delete completed events" : "Delete event"}
                   style={{
-                    flex: 1, padding: "10px 0", borderRadius: 11,
-                    border: completed ? "1.5px solid #e2e8f0" : "1.5px solid #fecaca",
-                    background: completed ? "#f8fafc" : "#fff1f2",
-                    fontSize: 13, fontWeight: 700,
-                    color: completed ? "#cbd5e1" : "#e11d48",
+                    flex: 1, padding: "10px 0", borderRadius: 10,
+                    border: completed ? "1px solid #e5e7eb" : "1px solid #fecaca",
+                    background: completed ? "#f9fafb" : "#fef2f2",
+                    fontSize: 13, fontWeight: 500, color: completed ? "#9ca3af" : "#dc2626",
                     cursor: completed ? "not-allowed" : "pointer",
-                    fontFamily: "'Outfit', sans-serif",
-                    transition: "all 0.15s",
-                    opacity: completed ? 0.6 : 1,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                   }}
-                  onMouseOver={e => { if (!completed) e.currentTarget.style.background = "#ffe4e6"; }}
-                  onMouseOut={e => { if (!completed) e.currentTarget.style.background = "#fff1f2"; }}
-                >🗑️ Delete</button>
+                >Delete Event</button>
               </>
             )}
           </div>
@@ -1001,7 +799,26 @@ function EventModal({ event, onClose, onDelete, onEdit, isAllEvents, onVolunteer
   );
 }
 
-// ─── Shared event normaliser ──────────────────────────────────────────────────
+function InfoRow({ icon, label, value, colors }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12,
+      padding: "8px 12px", borderRadius: 10,
+      background: "#f9fafb", border: "1px solid #f3f4f6",
+    }}>
+      <span style={{
+        width: 32, height: 32, borderRadius: 8,
+        background: colors.bg, border: `1px solid ${colors.light}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 14,
+      }}>{icon}</span>
+      <div>
+        <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</p>
+        <p style={{ margin: "2px 0 0", fontSize: 13, fontWeight: 500, color: "#111827" }}>{value}</p>
+      </div>
+    </div>
+  );
+}
 
 const getEventStatus = (startDateTime) => {
   if (!startDateTime) return "Active";
@@ -1036,8 +853,6 @@ const normaliseEvent = (e) => ({
   startDateTime: e.startDateTime,
   endDateTime: e.endDateTime,
 });
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ManageEventsPage({ setActivePage, onAction }) {
   const [activeTab, setActiveTab]         = useState("my");
@@ -1133,187 +948,180 @@ export default function ManageEventsPage({ setActivePage, onAction }) {
   };
 
   return (
-    <>
+    <div style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", maxWidth: 1400, margin: "0 auto", padding: "24px" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
-        @keyframes overlayIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes modalIn   { from { opacity: 0; transform: scale(0.92) translateY(32px) } to { opacity: 1; transform: scale(1) translateY(0) } }
-        @keyframes cardIn    { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: translateY(0) } }
-        @keyframes toastIn   { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
-        .event-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 16px; }
-        @media (max-width: 700px) {
-          .event-grid { grid-template-columns: 1fr; }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
 
-      <div style={{ fontFamily: "'Outfit', sans-serif" }}>
-
-        {/* Page Header */}
-        <div style={{
-          background: "linear-gradient(135deg, #0f766e, #0d9488 45%, #0ea5e9)",
-          borderRadius: 20, padding: "26px 28px", marginBottom: 18,
-          position: "relative", overflow: "hidden",
-        }}>
-          <div style={{ position: "absolute", top: -30, right: -30, width: 140, height: 140, borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
-          <div style={{ position: "absolute", bottom: -15, right: 80, width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.07)" }} />
-          <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+      <div style={{
+        background: "linear-gradient(135deg, #0f766e, #0d9488 50%, #0ea5e9)",
+        borderRadius: 20, padding: "32px 32px", marginBottom: 24,
+        position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
             <div>
-              <p style={{ margin: "0 0 3px", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)" }}>✦ Dashboard</p>
-              <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800, color: "white", margin: 0, letterSpacing: "-0.02em" }}>Manage Events</h1>
-              <p style={{ margin: "3px 0 0", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{events.length} event{events.length !== 1 ? "s" : ""} total</p>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)" }}>
+                Dashboard
+              </p>
+              <h1 style={{ fontSize: 32, fontWeight: 700, color: "white", margin: "8px 0 4px", letterSpacing: "-0.02em" }}>
+                Manage Events
+              </h1>
+              <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.8)" }}>
+                {events.length} event{events.length !== 1 ? "s" : ""} • {counts.Active} active
+              </p>
             </div>
             <button
               onClick={() => setActivePage("create-event")}
               style={{
                 background: "white", border: "none", borderRadius: 12,
-                padding: "10px 20px", fontFamily: "'Outfit', sans-serif",
-                fontSize: 13, fontWeight: 700, color: "#0d9488",
-                cursor: "pointer", boxShadow: "0 4px 16px rgba(0,0,0,0.14)",
-                transition: "all 0.2s",
+                padding: "10px 24px", fontSize: 14, fontWeight: 600,
+                color: "#0d9488", cursor: "pointer", transition: "all 0.2s",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               }}
-              onMouseOver={e => e.currentTarget.style.transform = "translateY(-1px)"}
-              onMouseOut={e => e.currentTarget.style.transform = "translateY(0)"}
-            >＋ New Event</button>
+              onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+            >
+              + Create New Event
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Toggle Tabs */}
-        <div style={{
-          background: "white", borderRadius: 16, border: "1.5px solid #e2e8f0",
-          padding: "5px", marginBottom: 12,
-          display: "flex", width: "100%", boxSizing: "border-box",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        }}>
-          {[{ key: "my", label: "My Events", icon: "👤" }, { key: "all", label: "All Events", icon: "🌐" }].map(tab => (
+      <div style={{
+        background: "white", borderRadius: 16, border: "1px solid #e5e7eb",
+        padding: "4px", marginBottom: 20,
+        display: "flex", gap: 4,
+      }}>
+        <button
+          onClick={() => handleTabSwitch("my")}
+          style={{
+            flex: 1, padding: "10px", borderRadius: 12, border: "none",
+            background: activeTab === "my" ? "#0d9488" : "transparent",
+            fontSize: 14, fontWeight: 500, color: activeTab === "my" ? "white" : "#6b7280",
+            cursor: "pointer", transition: "all 0.2s",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          }}
+        >
+          <span>👤</span> My Events
+          <span style={{
+            background: activeTab === "my" ? "rgba(255,255,255,0.2)" : "#f3f4f6",
+            borderRadius: 20, padding: "2px 8px", fontSize: 11, fontWeight: 600,
+          }}>{myEvents.length}</span>
+        </button>
+        <button
+          onClick={() => handleTabSwitch("all")}
+          style={{
+            flex: 1, padding: "10px", borderRadius: 12, border: "none",
+            background: activeTab === "all" ? "#0d9488" : "transparent",
+            fontSize: 14, fontWeight: 500, color: activeTab === "all" ? "white" : "#6b7280",
+            cursor: "pointer", transition: "all 0.2s",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          }}
+        >
+          <span>🌐</span> All Events
+          <span style={{
+            background: activeTab === "all" ? "rgba(255,255,255,0.2)" : "#f3f4f6",
+            borderRadius: 20, padding: "2px 8px", fontSize: 11, fontWeight: 600,
+          }}>{allEvents.length}</span>
+        </button>
+      </div>
+
+      <div style={{
+        background: "white", borderRadius: 12, border: "1px solid #e5e7eb",
+        padding: "16px", marginBottom: 24,
+        display: "flex", flexWrap: "wrap", gap: 12,
+        alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {filters.map(f => (
             <button
-              key={tab.key}
-              onClick={() => handleTabSwitch(tab.key)}
+              key={f} onClick={() => setFilter(f)}
               style={{
-                flex: 1, padding: "11px 0", borderRadius: 12, border: "none",
-                background: activeTab === tab.key
-                  ? "linear-gradient(135deg, #0f766e, #0d9488 60%, #0ea5e9)"
-                  : "transparent",
-                fontSize: 13, fontWeight: 700,
-                color: activeTab === tab.key ? "white" : "#64748b",
-                cursor: "pointer", transition: "all 0.2s ease",
-                fontFamily: "'Outfit', sans-serif",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                boxShadow: activeTab === tab.key ? "0 4px 14px rgba(13,148,136,0.35)" : "none",
-                letterSpacing: "0.01em",
+                padding: "6px 14px", borderRadius: 8,
+                border: filter === f ? "1px solid #0d9488" : "1px solid #e5e7eb",
+                background: filter === f ? "#f0fdfa" : "white",
+                fontSize: 13, fontWeight: 500, color: filter === f ? "#0d9488" : "#6b7280",
+                cursor: "pointer", transition: "all 0.2s",
+                display: "flex", alignItems: "center", gap: 6,
               }}
-              onMouseOver={e => { if (activeTab !== tab.key) e.currentTarget.style.background = "#f8fafc"; }}
-              onMouseOut={e => { if (activeTab !== tab.key) e.currentTarget.style.background = "transparent"; }}
             >
-              <span style={{ fontSize: 15 }}>{tab.icon}</span>
-              {tab.label}
+              {f}
               <span style={{
-                background: activeTab === tab.key ? "rgba(255,255,255,0.25)" : "#f1f5f9",
-                color: activeTab === tab.key ? "white" : "#94a3b8",
-                borderRadius: 99, fontSize: 10, fontWeight: 800,
-                padding: "2px 8px", marginLeft: 2,
-              }}>
-                {tab.key === "my" ? myEvents.length : allEvents.length}
-              </span>
+                background: filter === f ? "#0d9488" : "#f3f4f6",
+                color: filter === f ? "white" : "#6b7280",
+                borderRadius: 12, padding: "0px 6px", fontSize: 11, fontWeight: 600,
+              }}>{counts[f]}</span>
             </button>
           ))}
         </div>
-
-        {/* Filter + Search */}
-        <div style={{
-          background: "white", borderRadius: 14, border: "1.5px solid #e2e8f0",
-          padding: "12px 16px", marginBottom: 18,
-          display: "flex", flexWrap: "wrap", gap: 10,
-          alignItems: "center", justifyContent: "space-between",
-        }}>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {filters.map(f => (
-              <button
-                key={f} onClick={() => setFilter(f)}
-                style={{
-                  padding: "6px 12px", borderRadius: 9,
-                  border: filter === f ? "1.5px solid #0d9488" : "1.5px solid #e2e8f0",
-                  background: filter === f ? "#f0fdfa" : "white",
-                  fontSize: 12, fontWeight: 700,
-                  color: filter === f ? "#0d9488" : "#64748b",
-                  cursor: "pointer", transition: "all 0.15s",
-                  fontFamily: "'Outfit', sans-serif",
-                  display: "flex", alignItems: "center", gap: 5,
-                }}
-              >
-                {f}
-                <span style={{
-                  background: filter === f ? "#0d9488" : "#f1f5f9",
-                  color: filter === f ? "white" : "#94a3b8",
-                  borderRadius: 99, fontSize: 10, fontWeight: 700, padding: "1px 6px",
-                }}>{counts[f]}</span>
-              </button>
-            ))}
-          </div>
-          <div style={{ position: "relative" }}>
-            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#94a3b8" }}>🔍</span>
-            <input
-              value={search} onChange={e => setSearch(e.target.value)} placeholder="Search events…"
-              style={{
-                paddingLeft: 30, paddingRight: 12, paddingTop: 7, paddingBottom: 7,
-                borderRadius: 9, border: "1.5px solid #e2e8f0",
-                fontSize: 12, fontFamily: "'Outfit', sans-serif", color: "#334155",
-                outline: "none", background: "#f8fafc", minWidth: 180,
-              }}
-              onFocus={e => e.target.style.borderColor = "#0d9488"}
-              onBlur={e => e.target.style.borderColor = "#e2e8f0"}
-            />
-          </div>
+        <div style={{ position: "relative" }}>
+          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: "#9ca3af" }}>🔍</span>
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search events..."
+            style={{
+              padding: "8px 12px 8px 36px", borderRadius: 8,
+              border: "1px solid #e5e7eb", fontSize: 13,
+              width: 220, outline: "none", transition: "all 0.2s",
+            }}
+            onFocus={e => e.currentTarget.style.borderColor = "#0d9488"}
+            onBlur={e => e.currentTarget.style.borderColor = "#e5e7eb"}
+          />
         </div>
-
-        {/* Grid */}
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}>
-            <div style={{ fontSize: 28, marginBottom: 10 }}>⏳</div>
-            <p style={{ margin: 0, fontSize: 14 }}>Loading events…</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 16, border: "1.5px dashed #e2e8f0" }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
-            <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "#475569", fontFamily: "'Syne', sans-serif" }}>No events found</p>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#94a3b8" }}>
-              {search ? `No results for "${search}"` : "Create your first event to get started"}
-            </p>
-          </div>
-        ) : (
-          <div className="event-grid">
-            {filtered.map((event, i) => (
-              <div key={event.id} style={{ animation: `cardIn 0.3s ease ${i * 0.04}s both` }}>
-                <EventCard
-                  event={{ ...event, volunteers: volCounts[event.id] ?? event.volunteers }}
-                  onClick={setSelected}
-                  onDelete={requestDelete}
-                  onEdit={setEditingEvent}
-                  isAllEvents={isAllEvents}
-                />
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* Event detail modal */}
-      {selectedEvent && (
-        <EventModal
-              event={{
-                ...selectedEvent,
-                volunteers: volCounts[selectedEvent.id] ?? selectedEvent.volunteers
-              }}
-            onClose={() => setSelected(null)}
-            onDelete={requestDelete}
-            onEdit={(ev) => { setSelected(null); setEditingEvent(ev); }}
-            isAllEvents={isAllEvents}
-            onVolunteerCountLoaded={(id, count) =>
-              setVolCounts(prev => ({ ...prev, [id]: count }))
-            }
-          />
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 16, border: "1px solid #e5e7eb" }}>
+          <div style={{ width: 40, height: 40, border: "2px solid #e5e7eb", borderTopColor: "#0d9488", borderRadius: "50%", animation: "spin 0.6s linear infinite", margin: "0 auto 16px" }} />
+          <p style={{ fontSize: 14, color: "#6b7280" }}>Loading events...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 16, border: "1px solid #e5e7eb" }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
+          <p style={{ fontSize: 16, fontWeight: 500, color: "#374151", margin: 0 }}>No events found</p>
+          <p style={{ fontSize: 13, color: "#9ca3af", marginTop: 4 }}>
+            {search ? `No results for "${search}"` : "Create your first event to get started"}
+          </p>
+        </div>
+      ) : (
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+          gap: 20,
+        }}>
+          {filtered.map((event, i) => (
+            <div key={event.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.03}s both` }}>
+              <EventCard
+                event={{ ...event, volunteers: volCounts[event.id] ?? event.volunteers }}
+                onClick={setSelected}
+                onDelete={requestDelete}
+                onEdit={setEditingEvent}
+                isAllEvents={isAllEvents}
+              />
+            </div>
+          ))}
+        </div>
       )}
 
-      {/* Edit modal */}
+      {selectedEvent && (
+        <EventModal
+          event={{
+            ...selectedEvent,
+            volunteers: volCounts[selectedEvent.id] ?? selectedEvent.volunteers
+          }}
+          onClose={() => setSelected(null)}
+          onDelete={requestDelete}
+          onEdit={(ev) => { setSelected(null); setEditingEvent(ev); }}
+          isAllEvents={isAllEvents}
+          onVolunteerCountLoaded={(id, count) =>
+            setVolCounts(prev => ({ ...prev, [id]: count }))
+          }
+        />
+      )}
+
       {editingEvent && (
         <EditModal
           event={editingEvent}
@@ -1322,7 +1130,6 @@ export default function ManageEventsPage({ setActivePage, onAction }) {
         />
       )}
 
-      {/* Delete confirmation */}
       {confirmDelete && (
         <ConfirmDialog
           onConfirm={confirmDeleteAction}
@@ -1330,7 +1137,6 @@ export default function ManageEventsPage({ setActivePage, onAction }) {
         />
       )}
 
-      {/* Toast */}
       {toast && (
         <Toast
           message={toast.message}
@@ -1338,6 +1144,6 @@ export default function ManageEventsPage({ setActivePage, onAction }) {
           onDone={() => setToast(null)}
         />
       )}
-    </>
+    </div>
   );
 }

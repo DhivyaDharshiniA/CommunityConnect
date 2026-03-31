@@ -46,11 +46,6 @@ const NAV_GROUPS = [
   }
 ];
 
-const SOS_ITEM = {
-  id: "sos", label: "SOS Alert",
-  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-};
-
 export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) {
   const navigate = useNavigate();
   const userName = localStorage.getItem("name") || "User";
@@ -83,7 +78,6 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
           box-shadow: 4px 0 32px rgba(0,0,0,0.4);
         }
 
-        /* warm glow blob */
         .cc-sidebar::before {
           content: '';
           position: absolute;
@@ -95,7 +89,6 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
 
         .cc-sidebar > * { position: relative; z-index: 1; }
 
-        /* ── Header ── */
         .cc-header {
           display: flex; align-items: center; gap: 10px;
           padding: 18px 14px 16px;
@@ -137,7 +130,6 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
         }
         .cc-toggle:hover { background: rgba(255,255,255,0.13); color: #fff; }
 
-        /* ── User card ── */
         .cc-usercard {
           margin: 12px 10px;
           padding: 10px 12px;
@@ -170,7 +162,6 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
         .cc-username { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cc-userrole { font-size: 10.5px; font-weight: 500; color: #f97316; letter-spacing: 0.06em; text-transform: uppercase; }
 
-        /* ── Nav ── */
         .cc-nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 4px 8px; scrollbar-width: none; }
         .cc-nav::-webkit-scrollbar { display: none; }
 
@@ -187,7 +178,6 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
 
         .cc-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 6px 8px; }
 
-        /* ── Nav Item ── */
         .cc-navitem {
           position: relative;
           display: flex; align-items: center; gap: 10px;
@@ -215,16 +205,11 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
           color: #fb923c;
         }
 
-        .cc-navitem.sos-item { color: rgba(239,68,68,0.55); }
-        .cc-navitem.sos-item:hover { background: rgba(239,68,68,0.08); color: #f87171; }
-        .cc-navitem.sos-item.active { background: rgba(239,68,68,0.14); color: #ef4444; }
-
         .cc-pip {
           position: absolute; left: 0; top: 50%; transform: translateY(-50%);
           width: 3px; height: 55%; border-radius: 0 3px 3px 0;
           background: #f97316;
         }
-        .cc-pip.sos { background: #ef4444; }
 
         .cc-navicon { width: 17px; height: 17px; flex-shrink: 0; }
 
@@ -245,7 +230,6 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
           transition: opacity 0.15s ease;
         }
 
-        /* tooltip when collapsed */
         .cc-tooltip {
           position: absolute;
           left: calc(100% + 10px); top: 50%; transform: translateY(-50%);
@@ -259,7 +243,6 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
         }
         .cc-navitem:hover .cc-tooltip { opacity: ${collapsed ? 1 : 0}; }
 
-        /* ── Footer ── */
         .cc-footer {
           padding: 10px 8px 14px;
           border-top: 1px solid rgba(255,255,255,0.06);
@@ -351,28 +334,6 @@ export default function UserSidebar({ activeTab, setActiveTab, myEventsCount }) 
               })}
             </div>
           ))}
-
-          <div className="cc-divider" />
-
-          {/* SOS */}
-          {(() => {
-            const isActive = activeTab === SOS_ITEM.id;
-            return (
-              <button
-                className={`cc-navitem sos-item${isActive ? " active" : ""}`}
-                onClick={() => setActiveTab(SOS_ITEM.id)}
-                style={{
-                  opacity: mounted ? 1 : 0,
-                  transition: "opacity 0.3s ease 280ms, background 0.18s, color 0.18s",
-                }}
-              >
-                {isActive && <span className="cc-pip sos" />}
-                <span className="cc-navicon">{SOS_ITEM.icon}</span>
-                <span className="cc-navlabel">{SOS_ITEM.label}</span>
-                <span className="cc-tooltip">{SOS_ITEM.label}</span>
-              </button>
-            );
-          })()}
         </nav>
 
         {/* Footer */}

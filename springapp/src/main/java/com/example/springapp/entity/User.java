@@ -1,5 +1,6 @@
 package com.example.springapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,4 +32,8 @@ public class User {
     private String extractedOrganizationName;
 
     private String extractedRegistrationNumber;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private UserProfile profile;
 }

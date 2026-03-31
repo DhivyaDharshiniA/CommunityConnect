@@ -5,6 +5,7 @@ import CreateEventPage from "./CreateEventPage";
 import MyVolunteers from "./MyVolunteers"
 import MembersPage from "./MembersPage";
 import ReportsPage from "./ReportsPage";
+import axios from "axios";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FONTS
@@ -134,44 +135,181 @@ const navItems = [
   { id: "profile", label: "Profile", icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> },
 ];
 
+
 function Sidebar({ activePage, setActivePage, pendingCount, collapsed, setCollapsed }) {
+  const userName = localStorage.getItem("name") || "NGO Admin";
+  const initials = userName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+
   return (
-    <aside className={`flex flex-col h-screen bg-slate-900 text-white transition-all duration-300 flex-shrink-0 ${collapsed ? "w-[60px]" : "w-[230px]"}`}>
-      <div className={`flex items-center gap-3 p-4 border-b border-slate-700/50 ${collapsed ? "justify-center" : ""}`}>
-        <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@1&display=swap');
+
+        .cc-sidebar {
+          font-family: 'DM Sans', sans-serif;
+          height: 100vh;
+          background: #111110;
+          border-right: 1px solid rgba(255,255,255,0.06);
+          display: flex;
+          flex-direction: column;
+          transition: width 0.3s ease;
+          width: ${collapsed ? "70px" : "240px"};
+        }
+
+        .cc-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 16px;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .cc-logo {
+          width: 34px;
+          height: 34px;
+          border-radius: 10px;
+          background: linear-gradient(135deg,#f97316,#dc2626);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .cc-title {
+          font-family: 'DM Serif Display', serif;
+          font-size: 15px;
+          color: white;
+          opacity: ${collapsed ? 0 : 1};
+        }
+
+        .cc-user {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px;
+          margin: 10px;
+          background: rgba(255,255,255,0.04);
+          border-radius: 10px;
+          justify-content: ${collapsed ? "center" : "flex-start"};
+        }
+
+        .cc-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: linear-gradient(135deg,#f97316,#ef4444);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+        }
+
+        .cc-nav {
+          flex: 1;
+          padding: 8px;
+        }
+
+        .cc-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px;
+          border-radius: 10px;
+          cursor: pointer;
+          color: rgba(255,255,255,0.5);
+          transition: all 0.2s ease;
+          justify-content: ${collapsed ? "center" : "flex-start"};
+        }
+
+        .cc-item:hover {
+          background: rgba(255,255,255,0.05);
+          color: white;
+        }
+
+        .cc-item.active {
+          background: rgba(249,115,22,0.15);
+          color: #fb923c;
+        }
+
+        .cc-label {
+          opacity: ${collapsed ? 0 : 1};
+          transition: 0.2s;
+        }
+
+        .cc-footer {
+          padding: 10px;
+          border-top: 1px solid rgba(255,255,255,0.06);
+        }
+      `}</style>
+
+      <aside className="cc-sidebar">
+
+        {/* HEADER */}
+        <div className="cc-header">
+          <div className="cc-logo">
+            <svg width="16" height="16" stroke="white" fill="none" strokeWidth="2">
+              <circle cx="8" cy="8" r="6"/>
+            </svg>
+          </div>
+          {!collapsed && <div className="cc-title">Community Connect</div>}
         </div>
-        {!collapsed && <div><p className="text-sm font-bold leading-tight">CommunityConnect</p><p className="text-[10px] text-teal-400 tracking-widest uppercase font-semibold">NGO Platform</p></div>}
-      </div>
 
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const active = activePage === item.id;
-          return (
-            <button key={item.id} onClick={() => setActivePage(item.id)} title={collapsed ? item.label : ""} className={`w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm font-medium transition-all relative ${collapsed ? "justify-center" : ""} ${active ? "bg-teal-500/20 text-teal-400 border border-teal-500/30" : "text-slate-400 hover:bg-slate-800 hover:text-white border border-transparent"}`}>
-              <span className={`flex-shrink-0 ${active ? "text-teal-400" : ""}`}>{item.icon}</span>
-              {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
-              {!collapsed && item.badge && pendingCount > 0 && <span className="bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{pendingCount}</span>}
-              {collapsed && item.badge && pendingCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />}
-            </button>
-          );
-        })}
-      </nav>
+        {/* USER */}
+        <div className="cc-user">
+          <div className="cc-avatar">{initials}</div>
+          {!collapsed && <div style={{color:"#fff",fontSize:"13px"}}>{userName}</div>}
+        </div>
 
-      <div className="p-2 border-t border-slate-700/50 space-y-0.5">
-        <button onClick={handleLogout} className={`w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all ${collapsed ? "justify-center" : ""}`}>
-          <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          {!collapsed && "Logout"}
-        </button>
-        <button onClick={() => setCollapsed((c) => !c)} className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-xs text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all ${collapsed ? "justify-center" : ""}`}>
-          <svg className={`w-4 h-4 flex-shrink-0 transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-          {!collapsed && "Collapse"}
-        </button>
-      </div>
-    </aside>
+        {/* NAV */}
+        <div className="cc-nav">
+
+          {navItems.map(item => (
+            <div
+              key={item.id}
+              onClick={() => setActivePage(item.id)}
+              className={`cc-item ${activePage === item.id ? "active" : ""}`}
+            >
+              {item.icon}
+              <span className="cc-label">{item.label}</span>
+
+              {item.id === "requests" && pendingCount > 0 && !collapsed && (
+                <span style={{
+                  marginLeft: "auto",
+                  background: "#f97316",
+                  borderRadius: "20px",
+                  padding: "2px 6px",
+                  fontSize: "10px",
+                  color: "white"
+                }}>
+                  {pendingCount}
+                </span>
+              )}
+            </div>
+          ))}
+
+        </div>
+
+        {/* FOOTER */}
+        <div className="cc-footer">
+          <button
+            onClick={handleLogout}
+            className="cc-item"
+          >
+            ⎋ {!collapsed && "Logout"}
+          </button>
+
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="cc-item"
+          >
+            ⇆ {!collapsed && "Collapse"}
+          </button>
+        </div>
+
+      </aside>
+    </>
   );
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // HEADER
 // ─────────────────────────────────────────────────────────────────────────────
@@ -247,220 +385,357 @@ function BarChart({ data }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Dashboard
-function DashboardPage({ setActivePage, requests }) {
-  const pending = requests.filter((r) => r.status === "Pending");
+// function DashboardPage({ setActivePage, requests }) {
+//   const pending = requests.filter((r) => r.status === "Pending");
+//   return (
+//     <div className="space-y-5">
+//       {/* Banner */}
+//       <div className="bg-gradient-to-r from-teal-600 to-blue-600 rounded-2xl p-5 text-white relative overflow-hidden">
+//         <div className="absolute -right-6 -top-6 w-36 h-36 rounded-full bg-white/5" />
+//         <div className="absolute right-4 bottom-0 w-20 h-20 rounded-full bg-white/5" />
+//         <div className="relative">
+//           <p className="text-teal-100 text-xs font-semibold mb-1">Welcome back 👋</p>
+//           <h1 className="text-xl font-extrabold mb-0.5">GreenConnect NGO</h1>
+//           <p className="text-teal-100/70 text-xs">Here's what's happening with your organization today.</p>
+//         </div>
+//         <div className="absolute top-4 right-16 flex items-center gap-1.5 bg-white/10 rounded-xl px-2.5 py-1.5 backdrop-blur-sm border border-white/20">
+//           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /><span className="text-[10px] font-bold text-white/90">Verified NGO</span>
+//         </div>
+//       </div>
+//
+//       {/* Stats */}
+//       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+//         <StatCard label="Total Events" value={mockStats.totalEvents} sub="All categories" trend={12} color="teal" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} />
+//         <StatCard label="Volunteers Joined" value={mockStats.totalVolunteers} sub="Active participants" trend={8} color="blue" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} />
+//         <StatCard label="Pending Requests" value={pending.length} sub="Awaiting review" color="amber" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+//         <StatCard label="Verification" value="Verified" sub="NGO certification" color="green" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>} />
+//       </div>
+//
+//       {/* Chart + Requests */}
+//       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+//         <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 p-5">
+//           <div className="flex items-start justify-between mb-3">
+//             <div><h3 className="text-sm font-bold text-slate-800">Activity Overview</h3><p className="text-xs text-slate-400">Events & volunteer trends</p></div>
+//             <div className="flex gap-3 text-[10px] text-slate-400">
+//               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-teal-100 inline-block" />Volunteers</span>
+//               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-teal-500 inline-block" />Events</span>
+//             </div>
+//           </div>
+//           <BarChart data={chartData} />
+//           <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-50">
+//             {[{ l: "Avg Vols/Event", v: "7.8" }, { l: "6-Month Events", v: "27" }, { l: "Completion", v: "94%" }].map((s) => (
+//               <div key={s.l} className="text-center"><p className="text-base font-bold text-slate-800">{s.v}</p><p className="text-[9px] text-slate-400">{s.l}</p></div>
+//             ))}
+//           </div>
+//         </div>
+//         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-5">
+//           <div className="flex items-center justify-between mb-3">
+//             <div><h3 className="text-sm font-bold text-slate-800">Pending Requests</h3><p className="text-xs text-slate-400">{pending.length} awaiting</p></div>
+//             <button onClick={() => setActivePage("requests")} className="text-xs text-teal-600 font-semibold hover:underline">View all</button>
+//           </div>
+//           {pending.length === 0
+//             ? <p className="text-center text-sm text-slate-400 py-8">All caught up! 🎉</p>
+//             : <div className="space-y-2">
+//               {pending.slice(0, 4).map((r, i) => (
+//                 <div key={r.id} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50">
+//                   <Av initials={r.av} idx={i} size="sm" />
+//                   <div className="flex-1 min-w-0"><p className="text-xs font-semibold text-slate-700 truncate">{r.name}</p><p className="text-[10px] text-slate-400 truncate">{r.event}</p></div>
+//                   <Badge status="Pending" />
+//                 </div>
+//               ))}
+//               <button onClick={() => setActivePage("requests")} className="w-full text-center text-xs text-teal-600 font-semibold py-1.5 rounded-lg hover:bg-teal-50 transition-colors">Review all →</button>
+//             </div>
+//           }
+//         </div>
+//       </div>
+//
+//       {/* Recent Events */}
+//       <div className="bg-white rounded-2xl border border-slate-100 p-5">
+//         <div className="flex items-center justify-between mb-4">
+//           <div><h3 className="text-sm font-bold text-slate-800">Recent Events</h3><p className="text-xs text-slate-400">Latest across all categories</p></div>
+//           <button onClick={() => setActivePage("manage-events")} className="text-xs text-teal-600 font-semibold hover:underline">View all</button>
+//         </div>
+//         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+//           {mockEvents.slice(0, 3).map((e) => (
+//             <div key={e.id} className="border border-slate-100 rounded-xl p-3.5 hover:shadow-sm hover:border-teal-100 transition-all">
+//               <div className="flex justify-between items-start mb-2"><span className="text-xl">{catEmoji[e.category] || "📌"}</span><Badge status={e.status} /></div>
+//               <h4 className="text-xs font-bold text-slate-800 mb-1 line-clamp-1">{e.title}</h4>
+//               <p className="text-[10px] text-slate-400 mb-3">📅 {e.date}</p>
+//               <ProgressBar value={e.volunteers} max={e.capacity} />
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+function DashboardPage({ setActivePage }) {
+
+  const [events, setEvents] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // ================= FETCH DATA =================
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const [eventRes, volunteerRes] = await Promise.all([
+          axios.get("http://localhost:8080/api/events/my", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get("http://localhost:8080/api/volunteers/my-volunteers", {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+
+        setEvents(eventRes.data);
+
+        // Convert volunteers → requests
+        const formatted = [];
+        volunteerRes.data.forEach((v, idx) => {
+          v.appliedEvents?.forEach((ev, i) => {
+            formatted.push({
+              id: `${idx}-${i}`,
+              name: v.name,
+              event: ev,
+              status: "Pending",
+              av: v.name?.substring(0, 2).toUpperCase()
+            });
+          });
+        });
+
+        setRequests(formatted);
+
+      } catch (err) {
+        console.error("Dashboard error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // ================= DERIVED DATA =================
+  const pending = requests.filter(r => r.status === "Pending");
+  const totalVolunteers = requests.length;
+
+  // Chart format SAME as before
+  const chartData = events.map((e) => ({
+    month: new Date(e.startDateTime).toLocaleString("default", { month: "short" }),
+    events: 1,
+    volunteers: e.noOfVol || 0
+  }));
+
+  const catEmoji = {
+    Environment: "🌿",
+    Health: "❤️",
+    Education: "📚",
+    Food: "🍲"
+  };
+
+  // ================= LOADING =================
+  if (loading) {
+    return (
+      <div className="p-10 text-center text-slate-400 text-sm">
+        Loading dashboard...
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
+
       {/* Banner */}
-      <div className="bg-gradient-to-r from-teal-600 to-blue-600 rounded-2xl p-5 text-white relative overflow-hidden">
-        <div className="absolute -right-6 -top-6 w-36 h-36 rounded-full bg-white/5" />
-        <div className="absolute right-4 bottom-0 w-20 h-20 rounded-full bg-white/5" />
-        <div className="relative">
-          <p className="text-teal-100 text-xs font-semibold mb-1">Welcome back 👋</p>
-          <h1 className="text-xl font-extrabold mb-0.5">GreenConnect NGO</h1>
-          <p className="text-teal-100/70 text-xs">Here's what's happening with your organization today.</p>
-        </div>
-        <div className="absolute top-4 right-16 flex items-center gap-1.5 bg-white/10 rounded-xl px-2.5 py-1.5 backdrop-blur-sm border border-white/20">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /><span className="text-[10px] font-bold text-white/90">Verified NGO</span>
-        </div>
+{/*       <div className="bg-gradient-to-r from-teal-600 to-blue-600 rounded-2xl p-5 text-white relative overflow-hidden"> */}
+{/*         <div className="absolute -right-6 -top-6 w-36 h-36 rounded-full bg-white/5" /> */}
+{/*         <div className="absolute right-4 bottom-0 w-20 h-20 rounded-full bg-white/5" /> */}
+{/*         <div className="relative"> */}
+{/*           <p className="text-teal-100 text-xs font-semibold mb-1">Welcome back 👋</p> */}
+{/*           <h1 className="text-xl font-extrabold mb-0.5">GreenConnect NGO</h1> */}
+{/*           <p className="text-teal-100/70 text-xs">Here's what's happening with your organization today.</p> */}
+{/*         </div> */}
+{/*         <div className="absolute top-4 right-16 flex items-center gap-1.5 bg-white/10 rounded-xl px-2.5 py-1.5 backdrop-blur-sm border border-white/20"> */}
+{/*           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> */}
+{/*           <span className="text-[10px] font-bold text-white/90">Verified NGO</span> */}
+{/*         </div> */}
+{/*       </div> */}
+<div className="relative overflow-hidden rounded-2xl p-5
+  bg-gradient-to-r from-orange-500 via-orange-600 to-red-500
+  text-white shadow-lg">
+
+  {/* Glow Effects */}
+  <div className="absolute -top-10 -right-10 w-44 h-44 bg-white/10 rounded-full blur-2xl" />
+  <div className="absolute bottom-0 right-10 w-28 h-28 bg-black/10 rounded-full blur-xl" />
+
+  {/* Content */}
+  <div className="relative z-10 flex items-center justify-between">
+
+    {/* LEFT TEXT */}
+    <div>
+      <p className="text-orange-100 text-xs font-semibold mb-1 tracking-wide">
+        Welcome back 👋
+      </p>
+
+      <h1 className="text-2xl font-extrabold leading-tight">
+        GreenConnect NGO
+      </h1>
+
+      <p className="text-orange-100/80 text-xs mt-1">
+        Here's what's happening with your organization today.
+      </p>
+    </div>
+
+    {/* RIGHT STATUS CARD */}
+    <div className="flex flex-col items-end gap-2">
+
+      <div className="flex items-center gap-2
+        bg-white/10 backdrop-blur-md
+        px-3 py-1.5 rounded-xl border border-white/20">
+
+        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+
+        <span className="text-[11px] font-semibold text-white">
+          Verified NGO
+        </span>
       </div>
+
+      {/* Optional small stat */}
+      <div className="hidden sm:block text-right">
+        <p className="text-[10px] text-orange-100/70">Active Today</p>
+        <p className="text-sm font-bold">+12 Volunteers</p>
+      </div>
+
+    </div>
+
+  </div>
+</div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Total Events" value={mockStats.totalEvents} sub="All categories" trend={12} color="teal" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} />
-        <StatCard label="Volunteers Joined" value={mockStats.totalVolunteers} sub="Active participants" trend={8} color="blue" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} />
-        <StatCard label="Pending Requests" value={pending.length} sub="Awaiting review" color="amber" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
-        <StatCard label="Verification" value="Verified" sub="NGO certification" color="green" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>} />
+
+        <StatCard
+          label="Total Events"
+          value={events.length}
+          sub="All categories"
+          trend={12}
+          color="teal"
+          icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+        />
+
+        <StatCard
+          label="Volunteers Joined"
+          value={totalVolunteers}
+          sub="Active participants"
+          trend={8}
+          color="blue"
+          icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+        />
+
+        <StatCard
+          label="Pending Requests"
+          value={pending.length}
+          sub="Awaiting review"
+          color="amber"
+          icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        />
+
+        <StatCard
+          label="Verification"
+          value="Verified"
+          sub="NGO certification"
+          color="green"
+          icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" /></svg>}
+        />
+
       </div>
 
       {/* Chart + Requests */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+
+        {/* Chart */}
         <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div><h3 className="text-sm font-bold text-slate-800">Activity Overview</h3><p className="text-xs text-slate-400">Events & volunteer trends</p></div>
-            <div className="flex gap-3 text-[10px] text-slate-400">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-teal-100 inline-block" />Volunteers</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-teal-500 inline-block" />Events</span>
+          <h3 className="text-sm font-bold text-slate-800 mb-3">Activity Overview</h3>
+          <BarChart data={chartData} />
+
+          <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-50">
+            <div className="text-center">
+              <p className="text-base font-bold text-slate-800">
+                {events.length ? (totalVolunteers / events.length).toFixed(1) : 0}
+              </p>
+              <p className="text-[9px] text-slate-400">Avg Vols/Event</p>
+            </div>
+
+            <div className="text-center">
+              <p className="text-base font-bold text-slate-800">{events.length}</p>
+              <p className="text-[9px] text-slate-400">Total Events</p>
+            </div>
+
+            <div className="text-center">
+              <p className="text-base font-bold text-slate-800">100%</p>
+              <p className="text-[9px] text-slate-400">Completion</p>
             </div>
           </div>
-          <BarChart data={chartData} />
-          <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-50">
-            {[{ l: "Avg Vols/Event", v: "7.8" }, { l: "6-Month Events", v: "27" }, { l: "Completion", v: "94%" }].map((s) => (
-              <div key={s.l} className="text-center"><p className="text-base font-bold text-slate-800">{s.v}</p><p className="text-[9px] text-slate-400">{s.l}</p></div>
-            ))}
-          </div>
         </div>
+
+        {/* Requests */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div><h3 className="text-sm font-bold text-slate-800">Pending Requests</h3><p className="text-xs text-slate-400">{pending.length} awaiting</p></div>
-            <button onClick={() => setActivePage("requests")} className="text-xs text-teal-600 font-semibold hover:underline">View all</button>
-          </div>
-          {pending.length === 0
-            ? <p className="text-center text-sm text-slate-400 py-8">All caught up! 🎉</p>
-            : <div className="space-y-2">
+          <h3 className="text-sm font-bold text-slate-800 mb-3">
+            Pending Requests ({pending.length})
+          </h3>
+
+          {pending.length === 0 ? (
+            <p className="text-center text-sm text-slate-400 py-8">
+              All caught up! 🎉
+            </p>
+          ) : (
+            <div className="space-y-2">
               {pending.slice(0, 4).map((r, i) => (
                 <div key={r.id} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50">
                   <Av initials={r.av} idx={i} size="sm" />
-                  <div className="flex-1 min-w-0"><p className="text-xs font-semibold text-slate-700 truncate">{r.name}</p><p className="text-[10px] text-slate-400 truncate">{r.event}</p></div>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-slate-700">{r.name}</p>
+                    <p className="text-[10px] text-slate-400">{r.event}</p>
+                  </div>
                   <Badge status="Pending" />
                 </div>
               ))}
-              <button onClick={() => setActivePage("requests")} className="w-full text-center text-xs text-teal-600 font-semibold py-1.5 rounded-lg hover:bg-teal-50 transition-colors">Review all →</button>
             </div>
-          }
+          )}
         </div>
       </div>
 
       {/* Recent Events */}
       <div className="bg-white rounded-2xl border border-slate-100 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div><h3 className="text-sm font-bold text-slate-800">Recent Events</h3><p className="text-xs text-slate-400">Latest across all categories</p></div>
-          <button onClick={() => setActivePage("manage-events")} className="text-xs text-teal-600 font-semibold hover:underline">View all</button>
-        </div>
+        <h3 className="text-sm font-bold text-slate-800 mb-4">Recent Events</h3>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {mockEvents.slice(0, 3).map((e) => (
-            <div key={e.id} className="border border-slate-100 rounded-xl p-3.5 hover:shadow-sm hover:border-teal-100 transition-all">
-              <div className="flex justify-between items-start mb-2"><span className="text-xl">{catEmoji[e.category] || "📌"}</span><Badge status={e.status} /></div>
-              <h4 className="text-xs font-bold text-slate-800 mb-1 line-clamp-1">{e.title}</h4>
-              <p className="text-[10px] text-slate-400 mb-3">📅 {e.date}</p>
-              <ProgressBar value={e.volunteers} max={e.capacity} />
+          {events.slice(0, 3).map((e) => (
+            <div key={e.id} className="border rounded-xl p-3.5 hover:shadow-sm">
+              <div className="flex justify-between mb-2">
+                <span>{catEmoji[e.category] || "📌"}</span>
+                <Badge status={e.status || "Active"} />
+              </div>
+
+              <h4 className="text-xs font-bold">{e.title}</h4>
+              <p className="text-[10px] text-slate-400">
+                📅 {e.startDateTime?.split("T")[0]}
+              </p>
+
+              <ProgressBar
+                value={e.noOfVol || 0}
+                max={e.capacity || 50}
+              />
             </div>
           ))}
         </div>
       </div>
+
     </div>
   );
 }
-
-// Manage Events
-
-// Members
-{/* function MembersPage() { */}
-{/*   const [search, setSearch] = useState(""); */}
-{/*   const [roleFilter, setRoleFilter] = useState("All"); */}
-{/*   const filtered = mockMembers.filter((m) => { */}
-{/*     const ms = m.name.toLowerCase().includes(search.toLowerCase()); */}
-{/*     const mr = roleFilter === "All" || m.role === roleFilter; */}
-{/*     return ms && mr; */}
-{/*   }); */}
-
-{/*   return ( */}
-{/*     <div className="space-y-4"> */}
-{/*       <div className="grid grid-cols-2 md:grid-cols-4 gap-3"> */}
-{/*         {[{ l: "Total Members", v: mockMembers.length }, { l: "Active", v: mockMembers.filter((m) => m.status === "Active").length }, { l: "Team Leads", v: mockMembers.filter((m) => m.role === "Team Lead").length }, { l: "Avg Events", v: (mockMembers.reduce((a, m) => a + m.events, 0) / mockMembers.length).toFixed(1) }].map((s) => ( */}
-{/*           <div key={s.l} className="bg-white rounded-2xl border border-slate-100 p-4"><p className="text-2xl font-bold text-slate-800">{s.v}</p><p className="text-xs text-slate-500 mt-0.5">{s.l}</p></div> */}
-{/*         ))} */}
-{/*       </div> */}
-{/*       <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden"> */}
-{/*         <div className="p-3.5 border-b border-slate-50 flex flex-col sm:flex-row gap-2.5 justify-between"> */}
-{/*           <div className="flex flex-wrap gap-1.5"> */}
-{/*             {["All", "Team Lead", "Coordinator", "Volunteer"].map((r) => ( */}
-{/*               <button key={r} onClick={() => setRoleFilter(r)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${roleFilter === r ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{r}</button> */}
-{/*             ))} */}
-{/*           </div> */}
-{/*           <div className="flex items-center gap-1.5 bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200"> */}
-{/*             <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg> */}
-{/*             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search…" className="bg-transparent text-xs outline-none w-32 text-slate-600 placeholder-slate-400" /> */}
-{/*           </div> */}
-{/*         </div> */}
-{/*         <div className="overflow-x-auto"> */}
-{/*           <table className="w-full text-xs"> */}
-{/*             <thead><tr className="bg-slate-50 border-b border-slate-100">{["Member", "Role", "Events", "Joined", "Status", "Actions"].map((h) => <th key={h} className="text-left px-4 py-3 font-bold text-slate-500 uppercase tracking-wider">{h}</th>)}</tr></thead> */}
-{/*             <tbody className="divide-y divide-slate-50"> */}
-{/*               {filtered.map((m, i) => ( */}
-{/*                 <tr key={m.id} className="hover:bg-slate-50/60 transition-colors"> */}
-{/*                   <td className="px-4 py-3.5"><div className="flex items-center gap-2.5"><Av initials={m.av} idx={i} /><div><p className="font-bold text-slate-800">{m.name}</p><p className="text-[10px] text-slate-400">{m.email}</p></div></div></td> */}
-{/*                   <td className="px-4 py-3.5"><Badge status={m.role} /></td> */}
-{/*                   <td className="px-4 py-3.5"><div className="flex items-center gap-2"><div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-teal-500 rounded-full" style={{ width: `${(m.events / 20) * 100}%` }} /></div><span className="font-bold text-slate-700">{m.events}</span></div></td> */}
-{/*                   <td className="px-4 py-3.5 text-slate-500">{m.joined}</td> */}
-{/*                   <td className="px-4 py-3.5"><Badge status={m.status} /></td> */}
-{/*                   <td className="px-4 py-3.5"><div className="flex gap-2"><button className="text-teal-600 font-bold hover:underline">View</button><button className="text-slate-500 font-bold hover:underline">Message</button></div></td> */}
-{/*                 </tr> */}
-{/*               ))} */}
-{/*             </tbody> */}
-{/*           </table> */}
-{/*         </div> */}
-{/*         {filtered.length === 0 && <p className="text-center py-10 text-sm text-slate-400">No members found.</p>} */}
-{/*       </div> */}
-{/*     </div> */}
-{/*   ); */}
-{/* } */}
-
-// Reports
-{/* function ReportsPage({ onAction, members = [] }) { */}
-{/*   const maxV = Math.max(...chartData.map((d) => d.volunteers)); */}
-{/*   const cats = [{ c: "Environment", n: 2, col: "#14b8a6" }, { c: "Health", n: 2, col: "#ef4444" }, { c: "Education", n: 2, col: "#3b82f6" }]; */}
-
-{/*   return ( */}
-{/*     <div className="space-y-4"> */}
-{/*       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"> */}
-{/*         {[{ l: "Avg Volunteers/Event", v: "7.8" }, { l: "Approval Rate", v: "71%" }, { l: "Active Members", v: "7" }, { l: "Trust Score", v: "94/100" }].map((k) => ( */}
-{/*           <div key={k.l} className="bg-white rounded-2xl border border-slate-100 p-4"><p className="text-2xl font-bold text-slate-800">{k.v}</p><p className="text-xs text-slate-500 mt-0.5">{k.l}</p></div> */}
-{/*         ))} */}
-{/*       </div> */}
-
-{/*       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4"> */}
-{/*         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-5"> */}
-{/*           <div className="flex items-center justify-between mb-3"> */}
-{/*             <div><h3 className="text-sm font-bold text-slate-800">Volunteer Participation Trend</h3><p className="text-xs text-slate-400">Monthly — last 6 months</p></div> */}
-{/*             <button onClick={() => onAction("Report exported!")} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"> */}
-{/*               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg> Export */}
-{/*             </button> */}
-{/*           </div> */}
-{/*           <div className="space-y-2.5"> */}
-{/*             {chartData.map((d, i) => ( */}
-{/*               <div key={i} className="flex items-center gap-3"> */}
-{/*                 <span className="text-xs font-bold text-slate-600 w-6 flex-shrink-0">{d.month}</span> */}
-{/*                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${(d.volunteers / maxV) * 100}%` }} /></div> */}
-{/*                 <span className="text-xs font-bold text-slate-700 w-6 text-right">{d.volunteers}</span> */}
-{/*               </div> */}
-{/*             ))} */}
-{/*           </div> */}
-{/*         </div> */}
-{/*         <div className="bg-white rounded-2xl border border-slate-100 p-5"> */}
-{/*           <h3 className="text-sm font-bold text-slate-800 mb-4">Event Categories</h3> */}
-{/*           <div className="space-y-3"> */}
-{/*             {cats.map((c) => ( */}
-{/*               <div key={c.c}> */}
-{/*                 <div className="flex justify-between mb-1"><span className="text-xs font-medium text-slate-600">{c.c}</span><span className="text-xs font-bold text-slate-700">{c.n} events</span></div> */}
-{/*                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(c.n / 6) * 100}%`, backgroundColor: c.col }} /></div> */}
-{/*               </div> */}
-{/*             ))} */}
-{/*           </div> */}
-{/*           <div className="mt-5 pt-4 border-t border-slate-100"> */}
-{/*             <h4 className="text-xs font-bold text-slate-700 mb-3">Event Performance</h4> */}
-{/*             <div className="space-y-2.5"> */}
-{/*               {mockEvents.slice(0, 4).map((e) => { */}
-{/*                 const p = Math.round((e.volunteers / e.capacity) * 100); */}
-{/*                 return ( */}
-{/*                   <div key={e.id} className="flex items-center gap-2"> */}
-{/*                     <p className="text-[10px] text-slate-600 font-medium w-24 truncate flex-shrink-0">{e.title}</p> */}
-{/*                     <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${p >= 80 ? "bg-emerald-500" : p >= 50 ? "bg-amber-400" : "bg-blue-400"}`} style={{ width: `${p}%` }} /></div> */}
-{/*                     <span className="text-[10px] font-bold text-slate-600 w-8 text-right">{p}%</span> */}
-{/*                   </div> */}
-{/*                 ); */}
-{/*               })} */}
-{/*             </div> */}
-{/*           </div> */}
-{/*         </div> */}
-{/*       </div> */}
-
-{/*       <div className="bg-white rounded-2xl border border-slate-100 p-5"> */}
-{/*         <h3 className="text-sm font-bold text-slate-800 mb-4">Top Active Members</h3> */}
-{/*         <div className="grid grid-cols-1 md:grid-cols-2 gap-3"> */}
-{/*           {[...members].sort((a, b) => b.events - a.events).slice(0, 6).map((m, i) => ( */}
-{/*             <div key={m.id} className="flex items-center gap-3"> */}
-{/*               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${i === 0 ? "bg-amber-400 text-white" : "bg-slate-100 text-slate-500"}`}>{i + 1}</span> */}
-{/*               <Av initials={m.av} idx={i} size="sm" /> */}
-{/*               <div className="flex-1 min-w-0"><p className="text-xs font-bold text-slate-700 truncate">{m.name}</p><p className="text-[10px] text-slate-400">{m.role}</p></div> */}
-{/*               <div className="w-20 flex items-center gap-1.5"><div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-teal-500 rounded-full" style={{ width: `${(m.events / 20) * 100}%` }} /></div><span className="text-[10px] font-bold text-slate-700 w-4">{m.events}</span></div> */}
-{/*             </div> */}
-{/*           ))} */}
-{/*         </div> */}
-{/*       </div> */}
-{/*     </div> */}
-{/*   ); */}
-{/* } */}
 
 const handleLogout = () => {
   localStorage.clear();

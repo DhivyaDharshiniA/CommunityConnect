@@ -60,11 +60,13 @@ public class EventController {
 
         try {
 
+            // 🔹 Get logged-in user
             User user = userRepo.findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             String fileName = null;
 
+            // 🔹 Handle banner upload
             if (bannerImage != null && !bannerImage.isEmpty()) {
                 String uploadDir = "uploads/";
                 Files.createDirectories(Paths.get(uploadDir));
@@ -76,6 +78,7 @@ public class EventController {
                 Files.write(filePath, bannerImage.getBytes());
             }
 
+            // 🔹 Create event object
             Event event = new Event();
             event.setTitle(title);
             event.setDescription(description);
@@ -96,12 +99,29 @@ public class EventController {
                 event.setBannerImage("http://localhost:8080/uploads/" + fileName);
             }
 
-            // 🔥 IMPORTANT LINE
+            // 🔥 IMPORTANT
             event.setCreatedBy(user);
 
-            eventRepo.save(event);
+            // ================================
+            // ✅ STEP 1: SAVE EVENT FIRST
+            // ================================
+            Event savedEvent = eventRepo.save(event);
 
-            return ResponseEntity.ok("Event created successfully");
+            // ================================
+            // ✅ STEP 2: GENERATE QR CODE
+            // ================================
+            String qrFileName = qrService.generateQRCode(savedEvent.getId());
+
+            // ================================
+            // ✅ STEP 3: SAVE QR PATH
+            // ================================
+            String qrPath = "http://localhost:8080/qrcodes/" + qrFileName;
+            savedEvent.setQrCodePath(qrPath);
+
+            eventRepo.save(savedEvent);
+
+            // ================================
+            return ResponseEntity.ok(savedEvent);
 
         } catch (Exception e) {
             e.printStackTrace();

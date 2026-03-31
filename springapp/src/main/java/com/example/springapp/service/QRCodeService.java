@@ -1,5 +1,3 @@
-
-
 package com.example.springapp.service;
 
 import com.google.zxing.BarcodeFormat;

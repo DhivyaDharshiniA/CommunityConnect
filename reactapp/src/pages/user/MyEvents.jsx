@@ -28,7 +28,6 @@ export default function MyEvents() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-4">My Events</h2>
 
       {myEvents.length === 0 ? (
         <p className="text-gray-500">You haven't created any events yet.</p>
